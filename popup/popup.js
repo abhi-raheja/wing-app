@@ -34,6 +34,7 @@ let activeCollectionFilter = null;
 let currentSearchQuery = '';
 let isQueryLoading = false;
 let currentWingHighlights = [];
+let currentWingConnections = [];
 
 // ============================================
 // DOM Elements
@@ -122,6 +123,14 @@ const elements = {
   wingDetailsSave: document.getElementById('wingDetailsSave'),
   wingDetailsDelete: document.getElementById('wingDetailsDelete'),
   wingDetailsOpen: document.getElementById('wingDetailsOpen'),
+
+  // Connections Section
+  wingConnectionsSection: document.getElementById('wingConnectionsSection'),
+  refreshConnectionsBtn: document.getElementById('refreshConnectionsBtn'),
+  connectionsLoading: document.getElementById('connectionsLoading'),
+  connectionsList: document.getElementById('connectionsList'),
+  connectionsEmpty: document.getElementById('connectionsEmpty'),
+  findConnectionsBtn: document.getElementById('findConnectionsBtn'),
 
   // Toast
   toastContainer: document.getElementById('toastContainer'),
@@ -785,6 +794,14 @@ async function generateSummaryInBackground(wingId, tabId) {
 
       // Re-render to remove "Summarizing..." badge
       renderWings();
+
+      // Analyze connections in the background (non-blocking)
+      chrome.runtime.sendMessage({
+        type: 'ANALYZE_CONNECTIONS',
+        wingId: wingId,
+      }).catch((error) => {
+        console.log('Connection analysis skipped:', error.message);
+      });
     }
   } catch (error) {
     console.error('Error generating summary:', error);
@@ -1166,6 +1183,9 @@ async function openWingDetails(wingId) {
   // Render highlights
   renderWingHighlights();
 
+  // Load and render connections
+  loadWingConnections(wing.id);
+
   // Render edit checkboxes
   renderCollectionCheckboxes(elements.wingEditCollections, wing.collectionIds || [], 'edit');
 
@@ -1266,6 +1286,125 @@ async function goToHighlight(highlightId) {
 
   // Close the popup (it will close automatically when opening a new tab)
   showToast('Opening page...', 'info');
+}
+
+// ============================================
+// Connections Management
+// ============================================
+async function loadWingConnections(wingId) {
+  try {
+    // Show loading state
+    elements.connectionsLoading.classList.remove('hidden');
+    elements.connectionsList.innerHTML = '';
+    elements.connectionsEmpty.style.display = 'none';
+
+    // Get related wings via background script
+    const response = await chrome.runtime.sendMessage({
+      type: 'GET_RELATED_WINGS',
+      wingId: wingId,
+    });
+
+    currentWingConnections = response.relatedWings || [];
+    renderWingConnections();
+  } catch (error) {
+    console.error('Error loading connections:', error);
+    currentWingConnections = [];
+    renderWingConnections();
+  } finally {
+    elements.connectionsLoading.classList.add('hidden');
+  }
+}
+
+function renderWingConnections() {
+  if (currentWingConnections.length === 0) {
+    elements.connectionsList.innerHTML = '';
+    elements.connectionsEmpty.style.display = 'block';
+    return;
+  }
+
+  elements.connectionsEmpty.style.display = 'none';
+  elements.connectionsList.innerHTML = currentWingConnections
+    .map((wing) => {
+      const scorePercent = Math.round((wing.connectionScore || 0) * 100);
+      const scoreClass = scorePercent >= 70 ? 'high' : scorePercent >= 40 ? 'medium' : 'low';
+      const favicon = getFaviconUrl(wing.url);
+
+      return `
+        <div class="connection-item" data-wing-id="${wing.id}">
+          <img class="connection-favicon" src="${favicon}" alt="" onerror="this.src='../icons/icon16.png'">
+          <div class="connection-info">
+            <div class="connection-title">${escapeHtml(wing.title || 'Untitled')}</div>
+            <div class="connection-meta">
+              <div class="connection-score">
+                <div class="connection-score-bar">
+                  <div class="connection-score-fill ${scoreClass}" style="width: ${scorePercent}%"></div>
+                </div>
+              </div>
+              <span class="connection-type">${wing.connectionType || 'semantic'}</span>
+            </div>
+          </div>
+          <div class="connection-actions">
+            <button class="connection-action-btn" data-action="open" title="Open page">↗</button>
+            <button class="connection-action-btn remove" data-action="remove" title="Remove connection">✕</button>
+          </div>
+        </div>
+      `;
+    })
+    .join('');
+}
+
+async function analyzeConnections(wingId) {
+  try {
+    // Show loading state
+    elements.refreshConnectionsBtn.classList.add('loading');
+    elements.connectionsLoading.classList.remove('hidden');
+    elements.connectionsList.innerHTML = '';
+
+    // Trigger connection analysis via background script
+    const response = await chrome.runtime.sendMessage({
+      type: 'ANALYZE_CONNECTIONS',
+      wingId: wingId,
+    });
+
+    if (response.success) {
+      showToast(`Found ${response.connectionsFound} connection${response.connectionsFound !== 1 ? 's' : ''}`, 'success');
+    }
+
+    // Reload connections
+    await loadWingConnections(wingId);
+  } catch (error) {
+    console.error('Error analyzing connections:', error);
+    showToast('Failed to analyze connections', 'error');
+  } finally {
+    elements.refreshConnectionsBtn.classList.remove('loading');
+    elements.connectionsLoading.classList.add('hidden');
+  }
+}
+
+async function removeConnection(wingId1, wingId2) {
+  try {
+    const response = await chrome.runtime.sendMessage({
+      type: 'REMOVE_CONNECTION',
+      wingId1: wingId1,
+      wingId2: wingId2,
+    });
+
+    if (response.success) {
+      currentWingConnections = currentWingConnections.filter((w) => w.id !== wingId2);
+      renderWingConnections();
+      showToast('Connection removed', 'success');
+    }
+  } catch (error) {
+    console.error('Error removing connection:', error);
+    showToast('Failed to remove connection', 'error');
+  }
+}
+
+function openConnectedWing(wingId) {
+  const wing = currentWingConnections.find((w) => w.id === wingId);
+  if (wing) {
+    chrome.tabs.create({ url: wing.url });
+  }
 }
 
 async function saveWingChanges() {
@@ -1626,6 +1765,40 @@ function setupEventListeners() {
       deleteHighlightFromPopup(highlightId);
     } else if (action === 'goto') {
       goToHighlight(highlightId);
+    }
+  });
+
+  // Connections list events (delegation)
+  elements.connectionsList.addEventListener('click', (e) => {
+    const connectionItem = e.target.closest('.connection-item');
+    if (!connectionItem) return;
+
+    const wingId = connectionItem.dataset.wingId;
+    const action = e.target.closest('[data-action]')?.dataset.action;
+
+    if (action === 'remove') {
+      e.stopPropagation();
+      removeConnection(selectedWingId, wingId);
+    } else if (action === 'open') {
+      e.stopPropagation();
+      openConnectedWing(wingId);
+    } else {
+      // Click on the item itself - open the wing details
+      openConnectedWing(wingId);
+    }
+  });
+
+  // Refresh connections button
+  elements.refreshConnectionsBtn.addEventListener('click', () => {
+    if (selectedWingId) {
+      analyzeConnections(selectedWingId);
+    }
+  });
+
+  // Find connections button (in empty state)
+  elements.findConnectionsBtn.addEventListener('click', () => {
+    if (selectedWingId) {
+      analyzeConnections(selectedWingId);
     }
   });
 

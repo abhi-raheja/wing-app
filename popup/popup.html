@@ -234,6 +234,27 @@
             </div>
           </div>
 
+          <!-- Related Wings Section -->
+          <div id="wingConnectionsSection" class="connections-section">
+            <div class="section-header">
+              <h3 class="section-title">Related Wings</h3>
+              <button id="refreshConnectionsBtn" class="btn-icon-only" title="Find connections">
+                <span class="refresh-icon">↻</span>
+              </button>
+            </div>
+            <div id="connectionsLoading" class="connections-loading hidden">
+              <span class="loading-spinner"></span>
+              <span>Finding connections...</span>
+            </div>
+            <div id="connectionsList" class="connections-list">
+              <!-- Related wings will be rendered here -->
+            </div>
+            <div id="connectionsEmpty" class="connections-empty">
+              <p>No related wings found</p>
+              <button id="findConnectionsBtn" class="btn btn-secondary btn-sm">Find Connections</button>
+            </div>
+          </div>
+
           <div id="wingEditSection" class="edit-section">
             <div class="form-group">
               <label class="form-label">Collections</label>

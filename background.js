@@ -5,6 +5,7 @@
 
 import { generateSummary } from './lib/api.js';
 import * as db from './lib/db.js';
+import * as connections from './lib/connections.js';
 
 // Initialize database
 db.initDB().then(() => {
@@ -79,6 +80,76 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
   if (request.type === 'GET_PAGE_CONTENT') {
     return false;
+  }
+
+  // ============================================
+  // Connection-related message handlers
+  // ============================================
+
+  // Analyze connections for a wing
+  if (request.type === 'ANALYZE_CONNECTIONS') {
+    handleAnalyzeConnections(request.wingId)
+      .then(sendResponse)
+      .catch((error) => {
+        console.error('Error analyzing connections:', error);
+        sendResponse({ success: false, error: error.message });
+      });
+    return true;
+  }
+
+  // Get related wings for a specific wing
+  if (request.type === 'GET_RELATED_WINGS') {
+    handleGetRelatedWings(request.wingId)
+      .then(sendResponse)
+      .catch((error) => {
+        console.error('Error getting related wings:', error);
+        sendResponse({ relatedWings: [], error: error.message });
+      });
+    return true;
+  }
+
+  // Create a manual connection between two wings
+  if (request.type === 'CREATE_CONNECTION') {
+    handleCreateConnection(request.wingId1, request.wingId2)
+      .then(sendResponse)
+      .catch((error) => {
+        console.error('Error creating connection:', error);
+        sendResponse({ success: false, error: error.message });
+      });
+    return true;
+  }
+
+  // Remove a connection between two wings
+  if (request.type === 'REMOVE_CONNECTION') {
+    handleRemoveConnection(request.wingId1, request.wingId2)
+      .then(sendResponse)
+      .catch((error) => {
+        console.error('Error removing connection:', error);
+        sendResponse({ success: false, error: error.message });
+      });
+    return true;
+  }
+
+  // Refresh connections for a wing
+  if (request.type === 'REFRESH_CONNECTIONS') {
+    handleRefreshConnections(request.wingId)
+      .then(sendResponse)
+      .catch((error) => {
+        console.error('Error refreshing connections:', error);
+        sendResponse({ success: false, error: error.message });
+      });
+    return true;
+  }
+
+  // Get connection statistics
+  if (request.type === 'GET_CONNECTION_STATS') {
+    connections.getConnectionStats()
+      .then(sendResponse)
+      .catch((error) => {
+        console.error('Error getting connection stats:', error);
+        sendResponse({ error: error.message });
+      });
+    return true;
   }
 });
 
@@ -171,6 +242,88 @@ async function handleDeleteHighlight(highlightId) {
     return { success: true };
   } catch (error) {
     console.error('Error deleting highlight:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+// ============================================
+// Connection Handlers
+// ============================================
+
+/**
+ * Analyze connections for a wing
+ */
+async function handleAnalyzeConnections(wingId) {
+  try {
+    const wing = await db.getWing(wingId);
+    if (!wing) {
+      return { success: false, error: 'Wing not found' };
+    }
+
+    const newConnections = await connections.analyzeConnectionsForWing(wing);
+    return {
+      success: true,
+      connectionsFound: newConnections.length,
+      connections: newConnections,
+    };
+  } catch (error) {
+    console.error('Error analyzing connections:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Get related wings for a specific wing
+ */
+async function handleGetRelatedWings(wingId) {
+  try {
+    const relatedWings = await connections.getRelatedWings(wingId);
+    return { relatedWings };
+  } catch (error) {
+    console.error('Error getting related wings:', error);
+    return { relatedWings: [], error: error.message };
+  }
+}
+
+/**
+ * Create a manual connection between two wings
+ */
+async function handleCreateConnection(wingId1, wingId2) {
+  try {
+    const connection = await connections.createManualConnection(wingId1, wingId2);
+    return { success: true, connection };
+  } catch (error) {
+    console.error('Error creating connection:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Remove a connection between two wings
+ */
+async function handleRemoveConnection(wingId1, wingId2) {
+  try {
+    const removed = await connections.removeConnection(wingId1, wingId2);
+    return { success: removed };
+  } catch (error) {
+    console.error('Error removing connection:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Refresh connections for a wing
+ */
+async function handleRefreshConnections(wingId) {
+  try {
+    const newConnections = await connections.refreshConnections(wingId);
+    return {
+      success: true,
+      connectionsFound: newConnections.length,
+      connections: newConnections,
+    };
+  } catch (error) {
+    console.error('Error refreshing connections:', error);
     return { success: false, error: error.message };
   }
 }
