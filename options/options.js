@@ -18,8 +18,14 @@ const elements = {
   exportData: document.getElementById('exportData'),
   importData: document.getElementById('importData'),
   importFile: document.getElementById('importFile'),
+  importStatus: document.getElementById('importStatus'),
   clearAllData: document.getElementById('clearAllData'),
   toastContainer: document.getElementById('toastContainer'),
+  // Stats
+  statWings: document.getElementById('statWings'),
+  statCollections: document.getElementById('statCollections'),
+  statHighlights: document.getElementById('statHighlights'),
+  statConnections: document.getElementById('statConnections'),
 };
 
 // ============================================
@@ -110,9 +116,30 @@ function showStatus(message, type) {
 }
 
 // ============================================
+// Data Statistics
+// ============================================
+async function loadStats() {
+  try {
+    const data = await db.exportAllData();
+    const { collections, nests, wings, highlights, connections } = data.data;
+
+    elements.statWings.textContent = wings?.length || 0;
+    elements.statCollections.textContent = collections?.length || 0;
+    elements.statHighlights.textContent = highlights?.length || 0;
+    elements.statConnections.textContent = connections?.length || 0;
+  } catch (error) {
+    console.error('Error loading stats:', error);
+  }
+}
+
+// ============================================
 // Data Management
 // ============================================
 async function exportData() {
+  const btn = elements.exportData;
+  btn.classList.add('loading');
+  btn.disabled = true;
+
   try {
     const data = await db.exportAllData();
     const blob = new Blob([JSON.stringify(data, null, 2)], {
@@ -132,6 +159,9 @@ async function exportData() {
   } catch (error) {
     console.error('Export error:', error);
     showToast('Failed to export data', 'error');
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
   }
 }
 
@@ -139,30 +169,74 @@ function triggerImport() {
   elements.importFile.click();
 }
 
+function showImportStatus(message, type) {
+  elements.importStatus.textContent = message;
+  elements.importStatus.className = `import-status ${type}`;
+}
+
 async function handleImport(event) {
   const file = event.target.files[0];
   if (!file) return;
 
-  try {
-    const text = await file.text();
-    const data = JSON.parse(text);
+  const btn = elements.importData;
+  btn.classList.add('loading');
+  btn.disabled = true;
 
-    if (!data.data || !data.version) {
-      throw new Error('Invalid backup file format');
+  try {
+    showImportStatus('Reading file...', 'validating');
+
+    const text = await file.text();
+    let data;
+
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error('Invalid JSON format');
     }
 
+    // Validate structure
+    if (!data.data) {
+      throw new Error('Invalid backup file: missing data object');
+    }
+
+    if (!data.version) {
+      throw new Error('Invalid backup file: missing version');
+    }
+
+    // Show what will be imported
+    const { collections, nests, wings, highlights, connections } = data.data;
+    const summary = [
+      wings?.length ? `${wings.length} wings` : null,
+      collections?.length ? `${collections.length} collections` : null,
+      highlights?.length ? `${highlights.length} highlights` : null,
+      connections?.length ? `${connections.length} connections` : null,
+    ].filter(Boolean).join(', ');
+
+    showImportStatus(`Found: ${summary || 'empty backup'}`, 'validating');
+
+    // Confirm import
     const replace = confirm(
-      'Replace existing data with imported data? Click Cancel to merge instead.'
+      `Import ${summary || 'data'}?\n\nClick OK to replace all existing data.\nClick Cancel to merge with existing data.`
     );
 
+    showImportStatus('Importing...', 'validating');
     await db.importData(data, replace);
+
+    showImportStatus(`Successfully imported: ${summary}`, 'success');
     showToast('Data imported successfully', 'success');
+
+    // Refresh stats
+    await loadStats();
 
     // Reset file input
     elements.importFile.value = '';
   } catch (error) {
     console.error('Import error:', error);
+    showImportStatus(`Import failed: ${error.message}`, 'error');
     showToast(`Import failed: ${error.message}`, 'error');
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
   }
 }
 
@@ -182,6 +256,7 @@ async function clearAllData() {
   try {
     await db.clearAllData();
     showToast('All data cleared', 'success');
+    await loadStats();
   } catch (error) {
     console.error('Clear data error:', error);
     showToast('Failed to clear data', 'error');
@@ -213,6 +288,7 @@ async function init() {
   try {
     await db.initDB();
     await loadApiKey();
+    await loadStats();
     setupEventListeners();
     console.log('Wing options page initialized');
   } catch (error) {

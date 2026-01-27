@@ -36,6 +36,11 @@ let isQueryLoading = false;
 let currentWingHighlights = [];
 let currentWingConnections = [];
 
+// Pagination
+const WINGS_PER_PAGE = 20;
+let currentPage = 1;
+let totalFilteredWings = 0;
+
 // ============================================
 // DOM Elements
 // ============================================
@@ -365,7 +370,11 @@ function getMatchedFields(wing, query) {
 // ============================================
 // Filtered Rendering
 // ============================================
-function renderFilteredWings() {
+function renderFilteredWings(resetPage = true) {
+  if (resetPage) {
+    currentPage = 1;
+  }
+
   let filtered = [...wings];
 
   // Apply collection filter
@@ -385,11 +394,16 @@ function renderFilteredWings() {
     );
   }
 
-  renderWingsWithHighlighting(filtered, currentSearchQuery);
+  totalFilteredWings = filtered.length;
+
+  // Apply pagination
+  const paginatedWings = filtered.slice(0, currentPage * WINGS_PER_PAGE);
+
+  renderWingsWithHighlighting(paginatedWings, currentSearchQuery, totalFilteredWings);
 }
 
-function renderWingsWithHighlighting(wingsToRender, searchQuery) {
-  if (wingsToRender.length === 0) {
+function renderWingsWithHighlighting(wingsToRender, searchQuery, totalCount = wingsToRender.length) {
+  if (totalCount === 0) {
     elements.wingsList.innerHTML = '';
     elements.wingsEmpty.classList.remove('hidden');
     if (searchQuery || activeCollectionFilter) {
@@ -405,8 +419,9 @@ function renderWingsWithHighlighting(wingsToRender, searchQuery) {
   elements.wingsEmpty.classList.add('hidden');
 
   const sortedWings = sortWings([...wingsToRender], currentSortOption);
+  const hasMore = wingsToRender.length < totalCount;
 
-  elements.wingsList.innerHTML = sortedWings
+  let html = sortedWings
     .map((wing) => {
       const wingCollections = (wing.collectionIds || [])
         .map((id) => collections.find((c) => c.id === id))
@@ -455,56 +470,37 @@ function renderWingsWithHighlighting(wingsToRender, searchQuery) {
     `;
     })
     .join('');
+
+  // Add pagination info and Load More button
+  html += `
+    <div class="wings-pagination">
+      <span class="wings-count">Showing ${wingsToRender.length} of ${totalCount} wings</span>
+      ${hasMore ? `<button id="loadMoreWings" class="btn btn-secondary btn-sm">Load More</button>` : ''}
+    </div>
+  `;
+
+  elements.wingsList.innerHTML = html;
+
+  // Attach load more handler
+  if (hasMore) {
+    document.getElementById('loadMoreWings')?.addEventListener('click', loadMoreWings);
+  }
+}
+
+function loadMoreWings() {
+  currentPage++;
+  renderFilteredWings(false);
 }
 
 // ============================================
 // Wings Rendering
 // ============================================
-function renderWings(wingsToRender = wings) {
-  if (wingsToRender.length === 0) {
-    elements.wingsList.innerHTML = '';
-    elements.wingsEmpty.classList.remove('hidden');
-    return;
-  }
-
-  elements.wingsEmpty.classList.add('hidden');
-
-  const sortedWings = sortWings([...wingsToRender], currentSortOption);
-
-  elements.wingsList.innerHTML = sortedWings
-    .map((wing) => {
-      // Get first collection for display (show badge for multiple)
-      const wingCollections = (wing.collectionIds || [])
-        .map((id) => collections.find((c) => c.id === id))
-        .filter(Boolean);
-
-      const firstCollection = wingCollections[0];
-      const moreCount = wingCollections.length - 1;
-
-      return `
-      <div class="wing-card" data-wing-id="${wing.id}" draggable="true">
-        <img class="wing-card-favicon" src="${getFaviconUrl(wing.url)}" alt=""
-             onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔗</text></svg>'">
-        <div class="wing-card-content">
-          <div class="wing-card-title">${escapeHtml(wing.title || 'Untitled')}</div>
-          <div class="wing-card-url">${escapeHtml(truncateText(wing.url, 50))}</div>
-          <div class="wing-card-meta">
-            <span>${formatDate(wing.timestamp)}</span>
-            ${
-              firstCollection
-                ? `<span class="wing-card-collection">
-                     <span class="wing-card-collection-dot" style="background: ${firstCollection.color}"></span>
-                     ${escapeHtml(firstCollection.name)}${moreCount > 0 ? ` +${moreCount}` : ''}
-                   </span>`
-                : ''
-            }
-            ${!wing.summary ? '<span class="wing-card-collection" style="background: #fff3e0; color: #e65100;">Summarizing...</span>' : ''}
-          </div>
-        </div>
-      </div>
-    `;
-    })
-    .join('');
+function renderWings() {
+  // Reset filters and render via the main filtered function
+  currentSearchQuery = '';
+  activeCollectionFilter = null;
+  elements.searchInput.value = '';
+  renderFilteredWings(true);
 }
 
 // ============================================
@@ -732,6 +728,12 @@ function updateNestsForSelectedCollections() {
 async function saveWing() {
   if (!currentWingData) return;
 
+  // Set loading state
+  const btn = elements.wingItConfirm;
+  const originalText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Saving...';
+
   try {
     const collectionIds = getSelectedCheckboxValues(elements.wingCollections);
     const nestIds = getSelectedCheckboxValues(elements.wingNests);
@@ -761,6 +763,9 @@ async function saveWing() {
   } catch (error) {
     console.error('Error saving wing:', error);
     showToast('Failed to save wing', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalText;
   }
 }
 
@@ -1410,6 +1415,12 @@ function openConnectedWing(wingId) {
 async function saveWingChanges() {
   if (!selectedWingId) return;
 
+  // Set loading state
+  const btn = elements.wingDetailsSave;
+  const originalText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Saving...';
+
   try {
     const collectionIds = getSelectedCheckboxValues(elements.wingEditCollections);
     const nestIds = getSelectedCheckboxValues(elements.wingEditNests);
@@ -1429,6 +1440,9 @@ async function saveWingChanges() {
   } catch (error) {
     console.error('Error saving wing changes:', error);
     showToast('Failed to update wing', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalText;
   }
 }
 
@@ -1921,9 +1935,53 @@ function setupEventListeners() {
     backdrop.addEventListener('click', closeAllModals);
   });
 
-  // Close modals on Escape
+  // Global keyboard shortcuts
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeAllModals();
+    // Escape - close modals
+    if (e.key === 'Escape') {
+      closeAllModals();
+      closeSortMenu();
+      return;
+    }
+
+    // Enter - confirm active modal (when not in textarea)
+    if (e.key === 'Enter' && !e.target.matches('textarea')) {
+      // Wing It modal
+      if (!elements.wingItModal.classList.contains('hidden')) {
+        e.preventDefault();
+        saveWing();
+        return;
+      }
+
+      // Collection modal
+      if (!elements.collectionModal.classList.contains('hidden')) {
+        e.preventDefault();
+        saveCollection();
+        return;
+      }
+
+      // Nest modal
+      if (!elements.nestModal.classList.contains('hidden')) {
+        e.preventDefault();
+        saveNest();
+        return;
+      }
+
+      // Inline collection form (in Wing It modal)
+      if (!elements.inlineCollectionForm.classList.contains('hidden')) {
+        e.preventDefault();
+        saveInlineCollection();
+        return;
+      }
+    }
+
+    // Ctrl/Cmd + F - focus search
+    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+      if (currentView === 'wings') {
+        e.preventDefault();
+        elements.searchInput.focus();
+      }
+    }
   });
 }
 

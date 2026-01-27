@@ -17,13 +17,29 @@ let tooltipJustCreated = false; // Flag to prevent immediate removal
 // ============================================
 async function init() {
   try {
+    // Skip certain pages where content script shouldn't run
+    if (shouldSkipPage()) {
+      console.log('[Wing] Skipping page:', window.location.href);
+      return;
+    }
+
     const currentUrl = window.location.href;
 
     // Check if this page is winged
-    const response = await chrome.runtime.sendMessage({
-      type: 'CHECK_WINGED_PAGE',
-      url: currentUrl,
-    });
+    let response;
+    try {
+      response = await chrome.runtime.sendMessage({
+        type: 'CHECK_WINGED_PAGE',
+        url: currentUrl,
+      });
+    } catch (messageError) {
+      // Extension context invalidated (e.g., extension was reloaded)
+      if (messageError.message?.includes('Extension context invalidated')) {
+        console.log('[Wing] Extension was reloaded, content script inactive');
+        return;
+      }
+      throw messageError;
+    }
 
     if (response && response.isWinged) {
       isWingedPage = true;
@@ -53,8 +69,47 @@ async function init() {
 
     console.log('Wing content script initialized:', isWingedPage ? 'Winged page' : 'Not winged');
   } catch (error) {
+    // Silently fail for expected errors
+    if (error.message?.includes('Cannot access') || error.message?.includes('blocked')) {
+      console.log('[Wing] Content script blocked on this page');
+      return;
+    }
     console.error('Wing content script error:', error);
   }
+}
+
+/**
+ * Check if the current page should be skipped
+ */
+function shouldSkipPage() {
+  const url = window.location.href;
+
+  // Skip chrome:// pages
+  if (url.startsWith('chrome://') || url.startsWith('chrome-extension://')) {
+    return true;
+  }
+
+  // Skip about: pages
+  if (url.startsWith('about:')) {
+    return true;
+  }
+
+  // Skip browser internal pages
+  if (url.startsWith('edge://') || url.startsWith('brave://')) {
+    return true;
+  }
+
+  // Skip file:// pages (usually)
+  if (url.startsWith('file://')) {
+    return true;
+  }
+
+  // Skip PDF viewer
+  if (url.includes('/viewer.html') && url.includes('pdf')) {
+    return true;
+  }
+
+  return false;
 }
 
 // ============================================

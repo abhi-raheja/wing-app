@@ -44,11 +44,39 @@
           Export your wings, collections, and settings as a JSON file, or import from a backup.
         </p>
 
+        <!-- Data Statistics -->
+        <div id="dataStats" class="data-stats">
+          <div class="stat-item">
+            <span class="stat-value" id="statWings">-</span>
+            <span class="stat-label">Wings</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value" id="statCollections">-</span>
+            <span class="stat-label">Collections</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value" id="statHighlights">-</span>
+            <span class="stat-label">Highlights</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-value" id="statConnections">-</span>
+            <span class="stat-label">Connections</span>
+          </div>
+        </div>
+
         <div class="form-actions">
-          <button id="exportData" class="btn btn-secondary">Export Data</button>
-          <button id="importData" class="btn btn-secondary">Import Data</button>
+          <button id="exportData" class="btn btn-secondary">
+            <span class="btn-text">Export Data</span>
+            <span class="btn-loading hidden">Exporting...</span>
+          </button>
+          <button id="importData" class="btn btn-secondary">
+            <span class="btn-text">Import Data</span>
+            <span class="btn-loading hidden">Importing...</span>
+          </button>
           <input type="file" id="importFile" accept=".json" class="hidden">
         </div>
+
+        <div id="importStatus" class="import-status hidden"></div>
       </section>
 
       <!-- Danger Zone -->

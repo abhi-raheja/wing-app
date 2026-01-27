@@ -196,6 +196,80 @@ body {
   display: none !important;
 }
 
+/* Data Statistics */
+.data-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: var(--color-bg-secondary);
+  border-radius: 8px;
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-value {
+  display: block;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--color-primary);
+}
+
+.stat-label {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Button loading states */
+.btn .btn-loading {
+  display: none;
+}
+
+.btn.loading .btn-text {
+  display: none;
+}
+
+.btn.loading .btn-loading {
+  display: inline;
+}
+
+.btn.loading {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+/* Import status */
+.import-status {
+  margin-top: 16px;
+  padding: 12px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.import-status.hidden {
+  display: none;
+}
+
+.import-status.validating {
+  background: #e3f2fd;
+  color: var(--color-primary);
+}
+
+.import-status.success {
+  background: #e6f4ea;
+  color: var(--color-success);
+}
+
+.import-status.error {
+  background: #fce8e6;
+  color: var(--color-error);
+}
+
 /* Toast */
 .toast-container {
   position: fixed;
