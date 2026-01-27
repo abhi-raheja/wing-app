@@ -1,0 +1,28 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Local dev files
+.env
+.env.local
+
+# Build artifacts (if any)
+dist/
+build/
+
+# Node (if added later)
+node_modules/
+
+# Chrome extension local data
+*.crx
+*.pem

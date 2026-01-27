@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wing</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <h1 class="logo">Wing</h1>
+      </div>
+      <div class="header-right">
+        <button id="wingItBtn" class="btn btn-primary" title="Wing this page">
+          <span class="btn-icon">+</span>
+          Wing It
+        </button>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs">
+      <button class="nav-tab active" data-view="wings">Wings</button>
+      <button class="nav-tab" data-view="collections">Collections</button>
+      <button class="nav-tab" data-view="query">Ask AI</button>
+    </nav>
+
+    <!-- Search Bar (visible in wings view) -->
+    <div id="searchContainer" class="search-container">
+      <div class="search-row">
+        <input type="text" id="searchInput" class="search-input" placeholder="Search wings...">
+        <div class="sort-dropdown">
+          <button id="sortBtn" class="sort-btn" title="Sort wings">
+            <span class="sort-icon">↕</span>
+            <span id="sortLabel">Newest</span>
+          </button>
+          <div id="sortMenu" class="sort-menu hidden">
+            <button class="sort-option active" data-sort="newest">Newest first</button>
+            <button class="sort-option" data-sort="oldest">Oldest first</button>
+            <button class="sort-option" data-sort="title-asc">Title A-Z</button>
+            <button class="sort-option" data-sort="title-desc">Title Z-A</button>
+          </div>
+        </div>
+      </div>
+      <div id="filterChips" class="filter-chips hidden">
+        <!-- Collection filter chips will be rendered here -->
+      </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <main id="mainContent" class="main-content">
+      <!-- Wings View -->
+      <div id="wingsView" class="view active">
+        <div id="wingsList" class="wings-list">
+          <!-- Wings will be rendered here -->
+        </div>
+        <div id="wingsEmpty" class="empty-state hidden">
+          <div class="empty-icon">🪶</div>
+          <p class="empty-text">No wings yet</p>
+          <p class="empty-subtext">Click "Wing It" to save your first page</p>
+        </div>
+      </div>
+
+      <!-- Collections View -->
+      <div id="collectionsView" class="view hidden">
+        <div class="view-header">
+          <button id="addCollectionBtn" class="btn btn-secondary">
+            <span class="btn-icon">+</span>
+            New Collection
+          </button>
+        </div>
+        <div id="collectionsList" class="collections-list">
+          <!-- Collections will be rendered here -->
+        </div>
+        <div id="collectionsEmpty" class="empty-state hidden">
+          <div class="empty-icon">📁</div>
+          <p class="empty-text">No collections yet</p>
+          <p class="empty-subtext">Create a collection to organize your wings</p>
+        </div>
+      </div>
+
+      <!-- Query View -->
+      <div id="queryView" class="view hidden">
+        <div class="query-container">
+          <textarea id="queryInput" class="query-input" placeholder="Ask about your winged pages...&#10;e.g., 'What have I saved about JavaScript?'"></textarea>
+          <button id="queryBtn" class="btn btn-primary btn-full">
+            Ask Wing AI
+          </button>
+        </div>
+        <div id="queryResults" class="query-results hidden">
+          <!-- Query results will be rendered here -->
+        </div>
+        <div id="queryEmpty" class="empty-state">
+          <div class="empty-icon">🤖</div>
+          <p class="empty-text">Ask anything about your wings</p>
+          <p class="empty-subtext">Wing AI will search and analyze your saved pages</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- Wing It Modal -->
+    <div id="wingItModal" class="modal hidden">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title">Wing This Page</h2>
+          <button class="modal-close" id="wingItModalClose">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div id="wingPreview" class="wing-preview">
+            <img id="wingFavicon" class="wing-favicon" src="" alt="">
+            <div class="wing-info">
+              <div id="wingTitle" class="wing-title"></div>
+              <div id="wingUrl" class="wing-url"></div>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="form-label-row">
+              <label class="form-label">Collections (optional)</label>
+              <button id="addCollectionInline" class="btn-link">+ New</button>
+            </div>
+            <div id="wingCollections" class="checkbox-group">
+              <!-- Collection checkboxes will be rendered here -->
+            </div>
+            <p id="noCollectionsMsg" class="form-hint hidden">No collections yet.</p>
+
+            <!-- Inline Collection Creation -->
+            <div id="inlineCollectionForm" class="inline-form hidden">
+              <input type="text" id="inlineCollectionName" class="form-input" placeholder="Collection name">
+              <div id="inlineColorPicker" class="color-picker-mini">
+                <!-- Colors will be rendered here -->
+              </div>
+              <div class="inline-form-actions">
+                <button id="inlineCollectionCancel" class="btn btn-secondary btn-sm">Cancel</button>
+                <button id="inlineCollectionSave" class="btn btn-primary btn-sm">Create</button>
+              </div>
+            </div>
+          </div>
+          <div id="wingNestsContainer" class="form-group hidden">
+            <label class="form-label">Nests (optional)</label>
+            <div id="wingNests" class="checkbox-group">
+              <!-- Nest checkboxes will be rendered here -->
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="wingItCancel" class="btn btn-secondary">Cancel</button>
+          <button id="wingItConfirm" class="btn btn-primary">Wing It!</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Collection Modal (Create/Edit) -->
+    <div id="collectionModal" class="modal hidden">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="collectionModalTitle" class="modal-title">New Collection</h2>
+          <button class="modal-close" id="collectionModalClose">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Name</label>
+            <input type="text" id="collectionName" class="form-input" placeholder="Collection name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Description (optional)</label>
+            <input type="text" id="collectionDescription" class="form-input" placeholder="Brief description">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Color</label>
+            <div id="colorPicker" class="color-picker">
+              <!-- Colors will be rendered here -->
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="collectionCancel" class="btn btn-secondary">Cancel</button>
+          <button id="collectionSave" class="btn btn-primary">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Nest Modal (Create/Edit) -->
+    <div id="nestModal" class="modal hidden">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="nestModalTitle" class="modal-title">New Nest</h2>
+          <button class="modal-close" id="nestModalClose">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Name</label>
+            <input type="text" id="nestName" class="form-input" placeholder="Nest name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Parent Nest (optional)</label>
+            <select id="nestParent" class="form-select">
+              <option value="">No parent (root level)</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="nestCancel" class="btn btn-secondary">Cancel</button>
+          <button id="nestSave" class="btn btn-primary">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Wing Details Modal -->
+    <div id="wingDetailsModal" class="modal hidden">
+      <div class="modal-backdrop"></div>
+      <div class="modal-content modal-large">
+        <div class="modal-header">
+          <h2 id="wingDetailsTitle" class="modal-title">Wing Details</h2>
+          <button class="modal-close" id="wingDetailsModalClose">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div id="wingDetailsContent">
+            <!-- Wing details will be rendered here -->
+          </div>
+          <!-- Highlights Section -->
+          <div id="wingHighlightsSection" class="highlights-section hidden">
+            <div class="section-header">
+              <h3 class="section-title">Highlights</h3>
+              <span id="highlightsCount" class="highlights-count"></span>
+            </div>
+            <div id="wingHighlightsList" class="highlights-list">
+              <!-- Highlights will be rendered here -->
+            </div>
+          </div>
+
+          <div id="wingEditSection" class="edit-section">
+            <div class="form-group">
+              <label class="form-label">Collections</label>
+              <div id="wingEditCollections" class="checkbox-group">
+                <!-- Collection checkboxes will be rendered here -->
+              </div>
+            </div>
+            <div id="wingEditNestsContainer" class="form-group hidden">
+              <label class="form-label">Nests</label>
+              <div id="wingEditNests" class="checkbox-group">
+                <!-- Nest checkboxes will be rendered here -->
+              </div>
+            </div>
+            <button id="wingDetailsSave" class="btn btn-secondary btn-full">Save Changes</button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="wingDetailsDelete" class="btn btn-danger">Delete Wing</button>
+          <button id="wingDetailsOpen" class="btn btn-primary">Open Page</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+  </div>
+
+  <script src="popup.js" type="module"></script>
+</body>
+</html>
