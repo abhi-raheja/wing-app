@@ -4,17 +4,28 @@
  */
 
 import * as db from '../lib/db.js';
-import { validateApiKey as validateKey } from '../lib/api.js';
+import {
+  getProviders,
+  getCurrentProvider,
+  setCurrentProvider,
+  getApiKey,
+  saveApiKey as saveProviderApiKey,
+  removeApiKey as removeProviderApiKey,
+  validateApiKey,
+} from '../lib/api.js';
 
 // ============================================
 // DOM Elements
 // ============================================
 const elements = {
+  llmProvider: document.getElementById('llmProvider'),
   apiKey: document.getElementById('apiKey'),
   toggleVisibility: document.getElementById('toggleVisibility'),
   saveApiKey: document.getElementById('saveApiKey'),
   removeApiKey: document.getElementById('removeApiKey'),
   apiKeyStatus: document.getElementById('apiKeyStatus'),
+  providerLink: document.getElementById('providerLink'),
+  providerList: document.getElementById('providerList'),
   exportData: document.getElementById('exportData'),
   importData: document.getElementById('importData'),
   importFile: document.getElementById('importFile'),
@@ -27,6 +38,10 @@ const elements = {
   statHighlights: document.getElementById('statHighlights'),
   statConnections: document.getElementById('statConnections'),
 };
+
+// Provider configurations (loaded from api.js)
+let providers = {};
+let currentProvider = 'anthropic';
 
 // ============================================
 // Toast Notifications
@@ -44,14 +59,94 @@ function showToast(message, type = 'info') {
 }
 
 // ============================================
+// Provider Management
+// ============================================
+async function loadProviders() {
+  providers = getProviders();
+  currentProvider = await getCurrentProvider();
+
+  // Set the select value
+  elements.llmProvider.value = currentProvider;
+
+  // Update UI for current provider
+  updateProviderUI();
+
+  // Load the API key for current provider
+  await loadApiKey();
+
+  // Show status of all providers
+  await renderProviderStatus();
+}
+
+function updateProviderUI() {
+  const config = providers[currentProvider];
+  if (!config) return;
+
+  // Update placeholder
+  elements.apiKey.placeholder = config.keyPlaceholder;
+
+  // Update "Get API Key" link
+  elements.providerLink.href = config.website;
+  elements.providerLink.textContent = 'Get API Key';
+}
+
+async function renderProviderStatus() {
+  const providerKeys = Object.keys(providers);
+  const statusHtml = [];
+
+  for (const key of providerKeys) {
+    const config = providers[key];
+    const apiKey = await getApiKey(key);
+    const isConfigured = !!apiKey;
+    const isActive = key === currentProvider;
+
+    statusHtml.push(`
+      <div class="provider-item ${isActive ? 'active' : ''}">
+        <span class="provider-item-name">
+          ${config.name}
+          ${isActive ? '<span style="color: var(--color-primary); font-size: 10px;">(Active)</span>' : ''}
+        </span>
+        <span class="provider-item-status ${isConfigured ? 'configured' : 'not-configured'}">
+          ${isConfigured ? 'Configured' : 'Not configured'}
+        </span>
+      </div>
+    `);
+  }
+
+  elements.providerList.innerHTML = statusHtml.join('');
+}
+
+async function handleProviderChange() {
+  const newProvider = elements.llmProvider.value;
+
+  // Save the provider selection
+  await setCurrentProvider(newProvider);
+  currentProvider = newProvider;
+
+  // Update UI
+  updateProviderUI();
+
+  // Load API key for new provider
+  await loadApiKey();
+
+  // Update provider status
+  await renderProviderStatus();
+
+  showToast(`Switched to ${providers[newProvider].name}`, 'info');
+}
+
+// ============================================
 // API Key Management
 // ============================================
 async function loadApiKey() {
   try {
-    const result = await chrome.storage.local.get('anthropicApiKey');
-    if (result.anthropicApiKey) {
-      elements.apiKey.value = result.anthropicApiKey;
-      showStatus('API key is configured', 'success');
+    const apiKey = await getApiKey(currentProvider);
+    elements.apiKey.value = apiKey || '';
+
+    if (apiKey) {
+      showStatus(`${providers[currentProvider].name} API key is configured`, 'success');
+    } else {
+      showStatus(`No API key configured for ${providers[currentProvider].name}`, 'info');
     }
   } catch (error) {
     console.error('Error loading API key:', error);
@@ -60,14 +155,26 @@ async function loadApiKey() {
 
 async function saveApiKey() {
   const apiKey = elements.apiKey.value.trim();
+  const config = providers[currentProvider];
 
   if (!apiKey) {
     showStatus('Please enter an API key', 'error');
     return;
   }
 
-  if (!apiKey.startsWith('sk-ant-')) {
-    showStatus('Invalid API key format. Should start with "sk-ant-"', 'error');
+  // Basic format validation
+  if (currentProvider === 'anthropic' && !apiKey.startsWith('sk-ant-')) {
+    showStatus('Invalid API key format. Anthropic keys start with "sk-ant-"', 'error');
+    return;
+  }
+
+  if (currentProvider === 'openai' && !apiKey.startsWith('sk-')) {
+    showStatus('Invalid API key format. OpenAI keys start with "sk-"', 'error');
+    return;
+  }
+
+  if (currentProvider === 'google' && !apiKey.startsWith('AI')) {
+    showStatus('Invalid API key format. Google API keys start with "AI"', 'error');
     return;
   }
 
@@ -75,12 +182,15 @@ async function saveApiKey() {
     // Validate API key by making a test request
     showStatus('Validating API key...', 'info');
 
-    await validateKey(apiKey);
+    await validateApiKey(currentProvider, apiKey);
 
     // Save the key
-    await chrome.storage.local.set({ anthropicApiKey: apiKey });
-    showStatus('API key saved and validated successfully!', 'success');
+    await saveProviderApiKey(currentProvider, apiKey);
+    showStatus(`${config.name} API key saved and validated successfully!`, 'success');
     showToast('API key saved', 'success');
+
+    // Update provider status
+    await renderProviderStatus();
   } catch (error) {
     console.error('API key validation error:', error);
     showStatus(`Validation failed: ${error.message}`, 'error');
@@ -88,15 +198,20 @@ async function saveApiKey() {
 }
 
 async function removeApiKey() {
-  if (!confirm('Remove your API key? AI features will be disabled.')) {
+  const config = providers[currentProvider];
+
+  if (!confirm(`Remove your ${config.name} API key? AI features using this provider will be disabled.`)) {
     return;
   }
 
   try {
-    await chrome.storage.local.remove('anthropicApiKey');
+    await removeProviderApiKey(currentProvider);
     elements.apiKey.value = '';
-    showStatus('API key removed', 'success');
+    showStatus(`${config.name} API key removed`, 'success');
     showToast('API key removed', 'info');
+
+    // Update provider status
+    await renderProviderStatus();
   } catch (error) {
     console.error('Error removing API key:', error);
     showToast('Failed to remove API key', 'error');
@@ -267,6 +382,7 @@ async function clearAllData() {
 // Event Listeners
 // ============================================
 function setupEventListeners() {
+  elements.llmProvider.addEventListener('change', handleProviderChange);
   elements.toggleVisibility.addEventListener('click', toggleApiKeyVisibility);
   elements.saveApiKey.addEventListener('click', saveApiKey);
   elements.removeApiKey.addEventListener('click', removeApiKey);
@@ -287,7 +403,7 @@ function setupEventListeners() {
 async function init() {
   try {
     await db.initDB();
-    await loadApiKey();
+    await loadProviders();
     await loadStats();
     setupEventListeners();
     console.log('Wing options page initialized');

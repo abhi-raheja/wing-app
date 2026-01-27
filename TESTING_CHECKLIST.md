@@ -11,110 +11,110 @@
 ## 1. Extension Setup & Loading
 
 ### 1.1 Installation
-- [ ] Extension loads in chrome://extensions without errors
-- [ ] Extension icon appears in toolbar
-- [ ] Clicking icon opens popup
-- [ ] Service worker shows "Active" status (no errors in console)
+- [PASS] Extension loads in chrome://extensions without errors
+- [PASS] Extension icon appears in toolbar
+- [PASS] Clicking icon opens popup
+- [PASS] Service worker shows "Active" status (no errors in console)
 
 ### 1.2 Options Page
-- [ ] Right-click extension icon → "Options" opens settings page
-- [ ] Page loads without console errors
+- [PASS] Right-click extension icon → "Options" opens settings page
+- [PASS] Page loads without console errors
 
 ---
 
 ## 2. API Key Management
 
 ### 2.1 Initial Setup
-- [ ] First-time user sees empty API key field
-- [ ] Status message guides user to get API key
-- [ ] Link to console.anthropic.com works
+- [PASS] First-time user sees empty API key field
+- [PASS] Status message guides user to get API key
+- [PASS] Link to console.anthropic.com works
 
 ### 2.2 API Key Validation
-- [ ] Invalid key format rejected (doesn't start with "sk-ant-")
-- [ ] Invalid key shows error message after validation attempt
-- [ ] Valid key validates successfully
-- [ ] "Validating..." status shows during check
-- [ ] Success message displays after validation
+- [PASS] Invalid key format rejected (doesn't start with "sk-ant-")
+- [PASS] Invalid key shows error message after validation attempt
+- [PASS] Valid key validates successfully
+- [PASS] "Validating..." status shows during check
+- [PASS] Success message displays after validation
 
 ### 2.3 API Key Operations
-- [ ] Toggle visibility (eye icon) shows/hides key
-- [ ] Save button stores key
-- [ ] Remove button clears key (with confirmation)
-- [ ] Key persists after closing/reopening browser
+- [PASS] Toggle visibility (eye icon) shows/hides key
+- [PASS] Save button stores key
+- [PASS] Remove button clears key (with confirmation)
+- [PASS] Key persists after closing/reopening browser
 
 ---
 
 ## 3. Core "Wing It" Functionality
 
 ### 3.1 Wing It Modal
-- [ ] "Wing It" button opens modal
-- [ ] Current page title displays correctly
-- [ ] Current page URL displays correctly
-- [ ] Favicon loads (or fallback shows)
-- [ ] Collections list shows (if any exist)
-- [ ] "No collections yet" message shows (if none exist)
+- [PASS] "Wing It" button opens modal
+- [PASS] Current page title displays correctly
+- [PASS] Current page URL displays correctly
+- [PASS] Favicon loads (or fallback shows)
+- [PASS] Collections list shows (if any exist)
+- [PASS] "No collections yet" message shows (if none exist)
 
 ### 3.2 Saving a Wing
-- [ ] Can save without selecting collection
-- [ ] Can save with one collection selected
-- [ ] Can save with multiple collections selected
-- [ ] Loading spinner shows while saving
-- [ ] Success toast appears
-- [ ] Modal closes after save
-- [ ] Wing appears in wings list
-- [ ] "Summarizing..." badge shows (if API key configured)
+- [PASS] Can save without selecting collection
+- [PASS] Can save with one collection selected
+- [PASS] Can save with multiple collections selected
+- [PASS] Loading spinner shows while saving
+- [PASS] Success toast appears
+- [PASS] Modal closes after save
+- [PASS] Wing appears in wings list
+- [PASS] "Summarizing..." badge shows (if API key configured)
 
 ### 3.3 Summary Generation
-- [ ] Summary generates in background (watch console)
-- [ ] "Summarizing..." badge disappears after completion
-- [ ] Summary visible in wing details
-- [ ] Graceful handling when no API key (no summary, no error)
-- [ ] Error handling for API failures
+- [PASS] Summary generates in background (watch console)
+- [PASS] "Summarizing..." badge disappears after completion
+- [PASS] Summary visible in wing details
+- [PASS] Graceful handling when no API key (no summary, no error)
+- [PASS] Error handling for API failures
 
 ### 3.4 Duplicate Handling
 - [ ] Can wing the same page again (creates new wing)
-- [ ] Or: Shows "already winged" indicator (design decision)
+- [PASS] Or: Shows "already winged" indicator (design decision)
 
 ---
 
 ## 4. Wings List & Navigation
 
 ### 4.1 Wings Display
-- [ ] Wings show in list view
-- [ ] Favicon displays for each wing
-- [ ] Title displays (truncated if long)
-- [ ] URL displays (truncated)
-- [ ] Date shows correctly
-- [ ] Collection badge shows (if assigned)
-- [ ] Multiple collections show as "+N" badge
+- [PASS] Wings show in list view
+- [PASS] Favicon displays for each wing
+- [PASS] Title displays (truncated if long)
+- [PASS] URL displays (truncated)
+- [PASS] Date shows correctly
+- [PASS] Collection badge shows (if assigned)
+- [PASS] Multiple collections show as "+N" badge
 
 ### 4.2 Sorting
-- [ ] Sort dropdown opens on click
-- [ ] "Newest first" works correctly
-- [ ] "Oldest first" works correctly
-- [ ] "Title A-Z" works correctly
-- [ ] "Title Z-A" works correctly
-- [ ] Selected sort option highlighted
-- [ ] Sort persists during session
+- [PASS] Sort dropdown opens on click
+- [PASS] "Newest first" works correctly
+- [PASS] "Oldest first" works correctly
+- [PASS] "Title A-Z" works correctly
+- [PASS] "Title Z-A" works correctly
+- [PASS] Selected sort option highlighted
+- [FAIL] Sort persists during session
 
 ### 4.3 Search
-- [ ] Search input visible
-- [ ] Typing filters wings in real-time
-- [ ] Matches on title
-- [ ] Matches on URL
-- [ ] Matches on summary
-- [ ] "Match in summary" indicator shows
-- [ ] Search highlights matched text
-- [ ] "No matching wings" empty state shows
-- [ ] Clearing search shows all wings
+- [PASS] Search input visible
+- [PASS] Typing filters wings in real-time
+- [PASS] Matches on title
+- [PASS] Matches on URL
+- [PASS] Matches on summary
+- [PASS] "Match in summary" indicator shows
+- [PASS] Search highlights matched text
+- [PASS] "No matching wings" empty state shows
+- [PASS] Clearing search shows all wings
 
 ### 4.4 Pagination
-- [ ] Only 20 wings show initially (if >20 exist)
-- [ ] "Showing X of Y wings" count displays
-- [ ] "Load More" button appears when more exist
-- [ ] Clicking "Load More" loads additional wings
-- [ ] Pagination works with search filter
-- [ ] Pagination works with collection filter
+- [PASS] Only 20 wings show initially (if >20 exist)
+- [PASS] "Showing X of Y wings" count displays
+- [PASS] "Load More" button appears when more exist
+- [PASS] Clicking "Load More" loads additional wings
+- [PASS] Pagination works with search filter
+- [PASS] Pagination works with collection filter
 
 ### 4.5 Collection Filter
 - [ ] Filter chips show when collections exist
@@ -128,33 +128,33 @@
 ## 5. Wing Details Modal
 
 ### 5.1 Opening Details
-- [ ] Clicking wing card opens details modal
-- [ ] Title displays correctly
-- [ ] URL displays correctly
-- [ ] Full summary displays (if exists)
-- [ ] Date displays correctly
+- [PASS] Clicking wing card opens details modal
+- [PASS] Title displays correctly
+- [PASS] URL displays correctly
+- [PASS] Full summary displays (if exists)
+- [PASS] Date displays correctly
 
 ### 5.2 Collection Assignment
-- [ ] Current collections pre-selected
-- [ ] Can check/uncheck collections
-- [ ] Nests appear when collection selected
-- [ ] Can assign to nests
-- [ ] "Save Changes" button works
-- [ ] Loading spinner during save
-- [ ] Changes persist after save
+- [PASS] Current collections pre-selected
+- [PASS] Can check/uncheck collections
+- [PASS] Nests appear when collection selected
+- [PASS] Can assign to nests
+- [PASS] "Save Changes" button works
+- [PASS] Loading spinner during save
+- [PASS] Changes persist after save
 
 ### 5.3 Highlights Section
-- [ ] Section shows when highlights exist
-- [ ] Highlight count displays
-- [ ] Highlighted text shows
-- [ ] Annotation shows (if exists)
-- [ ] Date shows for each highlight
-- [ ] "Go to highlight" button works
-- [ ] "Delete" button removes highlight (with confirmation)
+- [PASS] Section shows when highlights exist
+- [PASS] Highlight count displays
+- [PASS] Highlighted text shows
+- [[ASS] Annotation shows (if exists)
+- [PASS] Date shows for each highlight
+- [PASS] "Go to highlight" button works
+- [PASS] "Delete" button removes highlight (with confirmation)
 
 ### 5.4 Related Wings (Connections)
-- [ ] Section displays in modal
-- [ ] "Find Connections" button works (if no connections)
+- [PASS] Section displays in modal
+- [PASS] "Find Connections" button works (if no connections)
 - [ ] Loading state shows during analysis
 - [ ] Related wings display with:
   - [ ] Favicon
@@ -551,11 +551,11 @@ After testing, fill out this summary:
 | Performance | | | |
 
 ### Top Issues (Priority Order)
-1.
-2.
-3.
-4.
-5.
+1. Is the api key setup currently designed to only accept anthropic keys? Can we allow the user to connect any LLM? 
+2. Why do I have to refresh the page after winging it for it to be tagged as winged in the bottom right corner of the screen. Why do I also have to refresh the page to start highlighting text on a winged page? Can that be automatically done without having to refresh it? 
+3. Instead of showing +N next to the collection, can we show the first 2-3 collections that a wing is in? I don't like the +1 style. 
+4. Can you create an uncategorized collection automatically in Wings, so that the wings that are not in any collection are put in uncategorized. 
+5. How does this find connection thing work? If it's only semantic connections right now, can we make that relation or connection more vibrant or more deep? 
 
 ### Top Design Recommendations
 1.

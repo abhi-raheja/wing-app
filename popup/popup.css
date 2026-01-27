@@ -303,6 +303,7 @@ body {
 .wing-card-meta {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: var(--spacing-sm);
   margin-top: var(--spacing-sm);
   font-size: var(--font-size-xs);
@@ -317,6 +318,10 @@ body {
   background: var(--color-bg-secondary);
   border-radius: var(--radius-sm);
   font-size: var(--font-size-xs);
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .wing-card-collection-dot {
@@ -355,6 +360,15 @@ body {
   border-radius: var(--radius-md);
   border: 1px solid var(--color-border);
   overflow: hidden;
+}
+
+.collection-card.uncategorized-collection {
+  border-style: dashed;
+  opacity: 0.9;
+}
+
+.collection-card.uncategorized-collection .collection-name {
+  font-style: italic;
 }
 
 .collection-header {

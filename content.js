@@ -68,6 +68,9 @@ async function init() {
     document.addEventListener('click', handleHighlightClick);
 
     console.log('Wing content script initialized:', isWingedPage ? 'Winged page' : 'Not winged');
+
+    // Listen for messages from popup/background
+    chrome.runtime.onMessage.addListener(handleRuntimeMessage);
   } catch (error) {
     // Silently fail for expected errors
     if (error.message?.includes('Cannot access') || error.message?.includes('blocked')) {
@@ -75,6 +78,34 @@ async function init() {
       return;
     }
     console.error('Wing content script error:', error);
+  }
+}
+
+/**
+ * Handle runtime messages from popup/background
+ */
+function handleRuntimeMessage(request, sender, sendResponse) {
+  if (request.type === 'PAGE_JUST_WINGED') {
+    console.log('[Wing] Page was just winged!', request.wingId);
+
+    // Update state
+    isWingedPage = true;
+    wingId = request.wingId;
+    highlights = [];
+
+    // Show the wing badge if not already visible
+    if (!document.querySelector('.wing-page-badge')) {
+      showWingBadge();
+    }
+
+    // Add text selection listeners if not already added
+    document.removeEventListener('mouseup', handleTextSelection);
+    document.removeEventListener('keyup', handleTextSelection);
+    document.addEventListener('mouseup', handleTextSelection);
+    document.addEventListener('keyup', handleTextSelection);
+
+    sendResponse({ success: true });
+    return true;
   }
 }
 

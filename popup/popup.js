@@ -296,6 +296,8 @@ function closeSortMenu() {
 
 function handleSortChange(sortOption) {
   currentSortOption = sortOption;
+  // Persist sort preference
+  chrome.storage.local.set({ wingsSortOption: sortOption });
   updateSortUI();
   closeSortMenu();
   renderFilteredWings();
@@ -427,8 +429,8 @@ function renderWingsWithHighlighting(wingsToRender, searchQuery, totalCount = wi
         .map((id) => collections.find((c) => c.id === id))
         .filter(Boolean);
 
-      const firstCollection = wingCollections[0];
-      const moreCount = wingCollections.length - 1;
+      // Show up to 3 collections
+      const displayCollections = wingCollections.slice(0, 3);
 
       const matchedFields = getMatchedFields(wing, searchQuery);
       const showMatchInfo = searchQuery && matchedFields.length > 0;
@@ -440,6 +442,14 @@ function renderWingsWithHighlighting(wingsToRender, searchQuery, totalCount = wi
       const url = searchQuery
         ? highlightText(truncateText(wing.url, 50), searchQuery)
         : escapeHtml(truncateText(wing.url, 50));
+
+      // Render collection badges (up to 3)
+      const collectionBadges = displayCollections.map((col) => `
+        <span class="wing-card-collection">
+          <span class="wing-card-collection-dot" style="background: ${col.color}"></span>
+          ${escapeHtml(col.name)}
+        </span>
+      `).join('');
 
       return `
       <div class="wing-card" data-wing-id="${wing.id}" draggable="true">
@@ -455,14 +465,7 @@ function renderWingsWithHighlighting(wingsToRender, searchQuery, totalCount = wi
           ` : ''}
           <div class="wing-card-meta">
             <span>${formatDate(wing.timestamp)}</span>
-            ${
-              firstCollection
-                ? `<span class="wing-card-collection">
-                     <span class="wing-card-collection-dot" style="background: ${firstCollection.color}"></span>
-                     ${escapeHtml(firstCollection.name)}${moreCount > 0 ? ` +${moreCount}` : ''}
-                   </span>`
-                : ''
-            }
+            ${collectionBadges}
             ${!wing.summary ? '<span class="wing-card-collection" style="background: #fff3e0; color: #e65100;">Summarizing...</span>' : ''}
           </div>
         </div>
@@ -507,7 +510,12 @@ function renderWings() {
 // Collections Rendering
 // ============================================
 function renderCollections() {
-  if (collections.length === 0) {
+  // Find uncategorized wings (no collection assignment)
+  const uncategorizedWings = wings.filter(
+    (w) => !w.collectionIds || w.collectionIds.length === 0
+  );
+
+  if (collections.length === 0 && uncategorizedWings.length === 0) {
     elements.collectionsList.innerHTML = '';
     elements.collectionsEmpty.classList.remove('hidden');
     return;
@@ -515,7 +523,7 @@ function renderCollections() {
 
   elements.collectionsEmpty.classList.add('hidden');
 
-  elements.collectionsList.innerHTML = collections
+  let html = collections
     .map((collection) => {
       const collectionWings = wings.filter((w) =>
         (w.collectionIds || []).includes(collection.id)
@@ -572,6 +580,35 @@ function renderCollections() {
     `;
     })
     .join('');
+
+  // Add Uncategorized section if there are wings without collections
+  if (uncategorizedWings.length > 0) {
+    html += `
+      <div class="collection-card uncategorized-collection" data-collection-id="uncategorized">
+        <div class="collection-header" data-collection-id="uncategorized">
+          <div class="collection-color" style="background: #9e9e9e"></div>
+          <div class="collection-info">
+            <div class="collection-name">Uncategorized</div>
+            <div class="collection-description">Wings not assigned to any collection</div>
+          </div>
+          <div class="collection-count">${uncategorizedWings.length} wings</div>
+        </div>
+        <div class="collection-content hidden">
+          <div class="collection-wings">
+            ${uncategorizedWings.map((w) => `
+              <div class="collection-wing-item" data-wing-id="${w.id}" draggable="true">
+                <img class="collection-wing-favicon" src="${getFaviconUrl(w.url)}" alt=""
+                     onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔗</text></svg>'">
+                <span class="collection-wing-title">${escapeHtml(truncateText(w.title || 'Untitled', 40))}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  elements.collectionsList.innerHTML = html;
 }
 
 function renderNestsTree(nestsList, collectionId, parentId = null) {
@@ -755,6 +792,17 @@ async function saveWing() {
     closeModal(elements.wingItModal);
     renderWings();
     showToast('Page winged!', 'success');
+
+    // Notify the content script that the page is now winged
+    try {
+      await chrome.tabs.sendMessage(currentWingData.tabId, {
+        type: 'PAGE_JUST_WINGED',
+        wingId: savedWing.id,
+      });
+    } catch (e) {
+      // Content script might not be loaded on this page, that's okay
+      console.log('[Wing] Could not notify content script:', e.message);
+    }
 
     // Trigger background summary generation
     generateSummaryInBackground(savedWing.id, currentWingData.tabId);
@@ -1992,12 +2040,19 @@ async function init() {
   try {
     await db.initDB();
 
+    // Load saved preferences
+    const prefs = await chrome.storage.local.get(['wingsSortOption']);
+    if (prefs.wingsSortOption) {
+      currentSortOption = prefs.wingsSortOption;
+    }
+
     [collections, nests, wings] = await Promise.all([
       db.getAllCollections(),
       db.getAllNests(),
       db.getAllWings(),
     ]);
 
+    updateSortUI();
     renderWings();
     renderCollections();
     renderFilterChips();
