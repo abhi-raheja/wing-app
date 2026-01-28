@@ -11,18 +11,35 @@
 
 # Logs
 *.log
+npm-debug.log*
 
 # Local dev files
 .env
 .env.local
+.env*.local
+
+# Secrets - NEVER commit these
+*.pem
+*.key
+*credentials*
+*secret*
+apikey*
+api_key*
 
 # Build artifacts (if any)
 dist/
 build/
 
-# Node (if added later)
+# Node
 node_modules/
+
+# Test coverage
+coverage/
 
 # Chrome extension local data
 *.crx
-*.pem
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
