@@ -1202,9 +1202,9 @@ async function openWingDetails(wingId) {
       </div>
     `
         : `
-      <div class="summary-status">
-        <div class="spinner"></div>
-        <span>AI summary generating...</span>
+      <div class="summary-status summary-missing">
+        <span>No AI summary</span>
+        <button class="btn btn-secondary btn-sm" id="retrySummaryBtn">Generate Summary</button>
       </div>
     `
     }
@@ -1274,6 +1274,102 @@ async function openWingDetails(wingId) {
   }
 
   openModal(elements.wingDetailsModal);
+
+  // Add retry summary button listener if present
+  const retrySummaryBtn = document.getElementById('retrySummaryBtn');
+  if (retrySummaryBtn) {
+    retrySummaryBtn.addEventListener('click', () => handleRetrySummary(wing));
+  }
+}
+
+/**
+ * Retry generating summary for a wing
+ */
+async function handleRetrySummary(wing) {
+  const btn = document.getElementById('retrySummaryBtn');
+  if (!btn) return;
+
+  // Check for API key
+  const hasKey = await api.hasApiKey();
+  if (!hasKey) {
+    showToast('Please add your API key in Settings', 'error');
+    chrome.runtime.openOptionsPage();
+    return;
+  }
+
+  // Update button to show loading
+  btn.disabled = true;
+  btn.textContent = 'Generating...';
+
+  try {
+    // We need to open the page in a tab to get its content
+    // First, try to find if the page is already open
+    const tabs = await chrome.tabs.query({ url: wing.url });
+    let tabId;
+
+    if (tabs.length > 0) {
+      tabId = tabs[0].id;
+    } else {
+      // Open the page in a new tab
+      const newTab = await chrome.tabs.create({ url: wing.url, active: false });
+      tabId = newTab.id;
+
+      // Wait for page to load
+      await new Promise((resolve) => {
+        const listener = (updatedTabId, info) => {
+          if (updatedTabId === tabId && info.status === 'complete') {
+            chrome.tabs.onUpdated.removeListener(listener);
+            resolve();
+          }
+        };
+        chrome.tabs.onUpdated.addListener(listener);
+      });
+    }
+
+    // Generate summary
+    const response = await chrome.runtime.sendMessage({
+      type: 'GENERATE_SUMMARY',
+      tabId: tabId,
+    });
+
+    // Close the tab if we opened it
+    if (tabs.length === 0) {
+      chrome.tabs.remove(tabId);
+    }
+
+    if (response && response.error) {
+      throw new Error(response.error);
+    }
+
+    if (response && response.summary) {
+      // Update the wing
+      await db.updateWing(wing.id, {
+        summary: response.summary,
+        fullContent: response.fullContent,
+      });
+
+      // Update local state
+      const wingIndex = wings.findIndex((w) => w.id === wing.id);
+      if (wingIndex !== -1) {
+        wings[wingIndex].summary = response.summary;
+        wings[wingIndex].fullContent = response.fullContent;
+      }
+
+      showToast('Summary generated!', 'success');
+
+      // Refresh the modal to show the summary
+      closeModal(elements.wingDetailsModal);
+      showWingDetails(wing.id);
+      renderWings();
+    } else {
+      throw new Error('No summary returned');
+    }
+  } catch (error) {
+    console.error('Error retrying summary:', error);
+    showToast('Failed to generate summary: ' + error.message, 'error');
+    btn.disabled = false;
+    btn.textContent = 'Generate Summary';
+  }
 }
 
 function updateEditNestsForSelectedCollections() {

@@ -1653,6 +1653,12 @@ body {
   height: 12px;
 }
 
+.summary-status.summary-missing {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-secondary);
+  justify-content: space-between;
+}
+
 /* ============================================
    Inline Form (for creating collections in Wing It)
    ============================================ */
