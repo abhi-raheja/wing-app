@@ -84,19 +84,26 @@
 
       <!-- Query View -->
       <div id="queryView" class="view hidden">
-        <div class="query-container">
-          <textarea id="queryInput" class="query-input" placeholder="Ask about your winged pages...&#10;e.g., 'What have I saved about JavaScript?'"></textarea>
-          <button id="queryBtn" class="btn btn-primary btn-full">
-            Ask Wing AI
+        <!-- Chat Thread -->
+        <div id="chatThread" class="chat-thread">
+          <div id="chatMessages" class="chat-messages">
+            <!-- Messages will be rendered here -->
+          </div>
+          <div id="chatEmpty" class="chat-empty">
+            <div class="chat-empty-icon">💬</div>
+            <p class="chat-empty-text">Ask Wing AI</p>
+            <p class="chat-empty-subtext">Query your saved pages using natural language</p>
+          </div>
+        </div>
+        <!-- Input Area -->
+        <div class="chat-input-area">
+          <textarea id="queryInput" class="chat-input" placeholder="Ask about your wings..." rows="1"></textarea>
+          <button id="queryBtn" class="chat-send-btn" title="Send">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
           </button>
-        </div>
-        <div id="queryResults" class="query-results hidden">
-          <!-- Query results will be rendered here -->
-        </div>
-        <div id="queryEmpty" class="empty-state">
-          <div class="empty-icon">🤖</div>
-          <p class="empty-text">Ask anything about your wings</p>
-          <p class="empty-subtext">Wing AI will search and analyze your saved pages</p>
         </div>
       </div>
     </main>

@@ -14,8 +14,45 @@ db.initDB().then(() => {
   console.error('Failed to initialize database:', error);
 });
 
+// ============================================
+// Theme Management
+// ============================================
+
+/**
+ * Set the extension icon based on theme
+ */
+async function setIconTheme(theme) {
+  const iconPath = theme === 'amber' ? 'icons/amber' : 'icons/orange';
+
+  try {
+    await chrome.action.setIcon({
+      path: {
+        16: `${iconPath}/icon16.png`,
+        48: `${iconPath}/icon48.png`,
+        128: `${iconPath}/icon128.png`,
+      },
+    });
+    console.log(`Icon theme set to: ${theme}`);
+  } catch (error) {
+    console.error('Error setting icon theme:', error);
+  }
+}
+
+// Initialize theme on startup
+chrome.storage.local.get('theme').then((result) => {
+  const theme = result.theme || 'orange';
+  setIconTheme(theme);
+});
+
 // Listen for messages from popup and content scripts
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  // Theme change
+  if (request.action === 'setTheme') {
+    setIconTheme(request.theme);
+    sendResponse({ success: true });
+    return true;
+  }
+
   // Summary generation
   if (request.type === 'GENERATE_SUMMARY') {
     handleGenerateSummary(request.tabId)

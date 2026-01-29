@@ -18,6 +18,7 @@ import {
 // DOM Elements
 // ============================================
 const elements = {
+  themeOptions: document.querySelectorAll('input[name="theme"]'),
   llmProvider: document.getElementById('llmProvider'),
   apiKey: document.getElementById('apiKey'),
   toggleVisibility: document.getElementById('toggleVisibility'),
@@ -379,9 +380,48 @@ async function clearAllData() {
 }
 
 // ============================================
+// Theme Management
+// ============================================
+async function loadTheme() {
+  try {
+    const result = await chrome.storage.local.get('theme');
+    const theme = result.theme || 'orange';
+
+    // Set the radio button
+    elements.themeOptions.forEach((radio) => {
+      radio.checked = radio.value === theme;
+    });
+  } catch (error) {
+    console.error('Error loading theme:', error);
+  }
+}
+
+async function handleThemeChange(event) {
+  const theme = event.target.value;
+
+  try {
+    // Save to storage
+    await chrome.storage.local.set({ theme });
+
+    // Update the extension icon via background script
+    chrome.runtime.sendMessage({ action: 'setTheme', theme });
+
+    showToast(`Theme changed to ${theme === 'orange' ? 'Deep Orange' : 'Golden Amber'}`, 'success');
+  } catch (error) {
+    console.error('Error saving theme:', error);
+    showToast('Failed to save theme', 'error');
+  }
+}
+
+// ============================================
 // Event Listeners
 // ============================================
 function setupEventListeners() {
+  // Theme selection
+  elements.themeOptions.forEach((radio) => {
+    radio.addEventListener('change', handleThemeChange);
+  });
+
   elements.llmProvider.addEventListener('change', handleProviderChange);
   elements.toggleVisibility.addEventListener('click', toggleApiKeyVisibility);
   elements.saveApiKey.addEventListener('click', saveApiKey);
@@ -403,6 +443,7 @@ function setupEventListeners() {
 async function init() {
   try {
     await db.initDB();
+    await loadTheme();
     await loadProviders();
     await loadStats();
     setupEventListeners();

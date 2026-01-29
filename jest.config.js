@@ -1,10 +1,10 @@
 /** @type {import('jest').Config} */
 export default {
   testEnvironment: 'jsdom',
-  roots: ['<rootDir>/__tests__'],
+  roots: ['<rootDir>/tests'],
   testMatch: ['**/*.test.js'],
   moduleFileExtensions: ['js', 'json'],
-  setupFilesAfterEnv: ['<rootDir>/__mocks__/setup.js'],
+  setupFilesAfterEnv: ['<rootDir>/mocks/setup.js'],
   transform: {},
   moduleNameMapper: {
     '^(\\.{1,2}/.*)\\.js$': '$1'
@@ -18,8 +18,8 @@ export default {
     'options/**/*.js',
     'background.js',
     'content.js',
-    '!**/__mocks__/**',
-    '!**/__tests__/**'
+    '!**/mocks/**',
+    '!**/tests/**'
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html'],

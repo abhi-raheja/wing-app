@@ -36,6 +36,9 @@ let isQueryLoading = false;
 let currentWingHighlights = [];
 let currentWingConnections = [];
 
+// Chat state
+let chatMessages = [];
+
 // Pagination
 const WINGS_PER_PAGE = 20;
 let currentPage = 1;
@@ -69,11 +72,12 @@ const elements = {
   collectionsList: document.getElementById('collectionsList'),
   collectionsEmpty: document.getElementById('collectionsEmpty'),
 
-  // Query
+  // Chat (Ask Wing AI)
+  chatThread: document.getElementById('chatThread'),
+  chatMessages: document.getElementById('chatMessages'),
+  chatEmpty: document.getElementById('chatEmpty'),
   queryInput: document.getElementById('queryInput'),
   queryBtn: document.getElementById('queryBtn'),
-  queryResults: document.getElementById('queryResults'),
-  queryEmpty: document.getElementById('queryEmpty'),
 
   // Wing It Modal
   wingItModal: document.getElementById('wingItModal'),
@@ -1529,8 +1533,163 @@ const handleSearch = debounce((query) => {
 }, 300);
 
 // ============================================
-// AI Query
+// AI Query (Chat Interface)
 // ============================================
+
+/**
+ * Simple markdown parser for chat messages
+ * Note: All user content is escaped via escapeHtml() before processing
+ */
+function parseMarkdown(text) {
+  if (!text) return '';
+
+  // First escape all HTML to prevent XSS
+  let html = escapeHtml(text);
+
+  // Bold: **text** or __text__
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  html = html.replace(/__(.+?)__/g, '<strong>$1</strong>');
+
+  // Italic: *text* or _text_
+  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  html = html.replace(/_(.+?)_/g, '<em>$1</em>');
+
+  // Inline code: `code`
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+  // Citation references: [1], [2], etc. - make them superscript
+  html = html.replace(/\[(\d+)\]/g, '<sup class="citation-ref">[$1]</sup>');
+
+  // Bullet lists: lines starting with - or *
+  html = html.replace(/^[\-\*]\s+(.+)$/gm, '<li>$1</li>');
+  html = html.replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>');
+
+  // Numbered lists: lines starting with 1. 2. etc
+  html = html.replace(/^\d+\.\s+(.+)$/gm, '<li>$1</li>');
+
+  // Paragraphs: double newlines
+  html = html.replace(/\n\n/g, '</p><p>');
+
+  // Single newlines within paragraphs
+  html = html.replace(/\n/g, '<br>');
+
+  // Wrap in paragraph
+  html = '<p>' + html + '</p>';
+
+  // Clean up empty paragraphs
+  html = html.replace(/<p><\/p>/g, '');
+
+  return html;
+}
+
+/**
+ * Render the chat thread
+ * Note: All dynamic content is escaped before insertion
+ */
+function renderChatMessages() {
+  if (chatMessages.length === 0) {
+    elements.chatEmpty.classList.remove('hidden');
+    elements.chatMessages.innerHTML = '';
+    return;
+  }
+
+  elements.chatEmpty.classList.add('hidden');
+
+  const messagesHtml = chatMessages
+    .map((msg) => {
+      if (msg.role === 'user') {
+        // User content is escaped
+        return '<div class="chat-message chat-message-user">' +
+          '<div class="chat-message-content">' + escapeHtml(msg.content) + '</div>' +
+          '</div>';
+      } else if (msg.role === 'assistant') {
+        // Build sources HTML if present
+        let sourcesHtml = '';
+        if (msg.sources && msg.sources.length > 0) {
+          const sourceItems = msg.sources.map((source) => {
+            const faviconUrl = getFaviconUrl(source.url);
+            const titleEscaped = escapeHtml(truncateText(source.title || 'Untitled', 50));
+            return '<a href="' + escapeHtml(source.url) + '" target="_blank" class="chat-source-item">' +
+              '<img src="' + faviconUrl + '" alt="" class="chat-source-favicon" ' +
+              'onerror="this.src=\'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔗</text></svg>\'">' +
+              '<span class="chat-source-title">' + titleEscaped + '</span>' +
+              '</a>';
+          }).join('');
+
+          sourcesHtml = '<div class="chat-sources">' +
+            '<button class="chat-sources-toggle" onclick="this.parentElement.classList.toggle(\'expanded\')">' +
+            '<span class="sources-icon">📚</span>' +
+            '<span class="sources-label">Sources (' + msg.sources.length + ')</span>' +
+            '<span class="sources-chevron">›</span>' +
+            '</button>' +
+            '<div class="chat-sources-list">' + sourceItems + '</div>' +
+            '</div>';
+        }
+
+        // Assistant content goes through markdown parser which escapes first
+        return '<div class="chat-message chat-message-assistant">' +
+          '<div class="chat-message-content">' + parseMarkdown(msg.content) + '</div>' +
+          sourcesHtml +
+          '</div>';
+      } else if (msg.role === 'error') {
+        // Error content is escaped
+        return '<div class="chat-message chat-message-error">' +
+          '<div class="chat-error-icon">⚠️</div>' +
+          '<div class="chat-message-content">' + escapeHtml(msg.content) + '</div>' +
+          '</div>';
+      }
+      return '';
+    })
+    .join('');
+
+  elements.chatMessages.innerHTML = messagesHtml;
+
+  // Scroll to bottom
+  elements.chatThread.scrollTop = elements.chatThread.scrollHeight;
+}
+
+/**
+ * Add a message to the chat
+ */
+function addChatMessage(role, content, sources) {
+  const message = { role: role, content: content, timestamp: Date.now() };
+  if (sources) {
+    message.sources = sources;
+  }
+  chatMessages.push(message);
+  renderChatMessages();
+}
+
+/**
+ * Show typing indicator
+ */
+function showTypingIndicator() {
+  elements.chatEmpty.classList.add('hidden');
+
+  // Remove any existing typing indicator
+  const existing = elements.chatMessages.querySelector('.chat-typing-indicator');
+  if (existing) existing.remove();
+
+  const indicator = document.createElement('div');
+  indicator.className = 'chat-typing-indicator';
+  indicator.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
+  elements.chatMessages.appendChild(indicator);
+  elements.chatThread.scrollTop = elements.chatThread.scrollHeight;
+}
+
+/**
+ * Hide typing indicator
+ */
+function hideTypingIndicator() {
+  const indicator = elements.chatMessages.querySelector('.chat-typing-indicator');
+  if (indicator) {
+    indicator.remove();
+  }
+}
+
+/**
+ * Handle query submission
+ */
 async function handleQuery() {
   const query = elements.queryInput.value.trim();
 
@@ -1543,7 +1702,6 @@ async function handleQuery() {
   const hasKey = await api.hasApiKey();
   if (!hasKey) {
     showToast('Please add your API key in Settings', 'error');
-    // Open options page
     chrome.runtime.openOptionsPage();
     return;
   }
@@ -1553,80 +1711,50 @@ async function handleQuery() {
     return;
   }
 
+  // Add user message to chat
+  addChatMessage('user', query);
+
+  // Clear input and reset height
+  elements.queryInput.value = '';
+  elements.queryInput.style.height = 'auto';
+
+  // Set loading state
   setQueryLoading(true);
+  showTypingIndicator();
 
   try {
     const result = await api.queryWings(query, wings);
-    renderQueryResults(result);
+
+    // Hide typing indicator
+    hideTypingIndicator();
+
+    // Add assistant response
+    addChatMessage('assistant', result.answer, result.citations);
   } catch (error) {
     console.error('Query error:', error);
-    showQueryError(error.message);
+    hideTypingIndicator();
+    addChatMessage('error', error.message || 'Something went wrong. Please try again.');
   } finally {
     setQueryLoading(false);
   }
 }
 
+/**
+ * Set loading state for query
+ */
 function setQueryLoading(loading) {
   isQueryLoading = loading;
   elements.queryBtn.disabled = loading;
-  elements.queryBtn.innerHTML = loading
-    ? '<span class="spinner"></span> Thinking...'
-    : 'Ask Wing AI';
   elements.queryInput.disabled = loading;
 }
 
-function renderQueryResults(result) {
-  elements.queryEmpty.classList.add('hidden');
-  elements.queryResults.classList.remove('hidden');
-
-  // Format the answer with proper line breaks
-  const formattedAnswer = escapeHtml(result.answer)
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/\n/g, '<br>');
-
-  let html = `
-    <div class="query-answer">
-      <p>${formattedAnswer}</p>
-    </div>
-  `;
-
-  // Add citations if available
-  if (result.citations && result.citations.length > 0) {
-    html += `
-      <div class="query-citations">
-        <div class="query-citations-title">Sources</div>
-        ${result.citations.map((wing) => `
-          <a href="${wing.url}" target="_blank" class="query-citation" title="${escapeHtml(wing.title || 'Untitled')}">
-            <img src="${getFaviconUrl(wing.url)}" alt="" class="query-citation-favicon"
-                 onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔗</text></svg>'">
-            <span class="query-citation-title">${escapeHtml(truncateText(wing.title || 'Untitled', 40))}</span>
-          </a>
-        `).join('')}
-      </div>
-    `;
-  }
-
-  elements.queryResults.innerHTML = html;
-}
-
-function showQueryError(message) {
-  elements.queryEmpty.classList.add('hidden');
-  elements.queryResults.classList.remove('hidden');
-  elements.queryResults.innerHTML = `
-    <div class="query-error">
-      <div class="query-error-icon">⚠️</div>
-      <div class="query-error-message">${escapeHtml(message)}</div>
-      <button class="btn btn-secondary" onclick="document.getElementById('queryResults').classList.add('hidden'); document.getElementById('queryEmpty').classList.remove('hidden');">
-        Try again
-      </button>
-    </div>
-  `;
-}
-
-function clearQueryResults() {
-  elements.queryResults.classList.add('hidden');
-  elements.queryResults.innerHTML = '';
-  elements.queryEmpty.classList.remove('hidden');
+/**
+ * Auto-resize textarea as user types
+ */
+function autoResizeTextarea() {
+  const textarea = elements.queryInput;
+  textarea.style.height = 'auto';
+  textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
 }
 
 // ============================================
@@ -1967,12 +2095,15 @@ function setupEventListeners() {
     }
   });
 
-  // Query
+  // Query (Chat)
   elements.queryBtn.addEventListener('click', handleQuery);
 
-  // Allow Enter to submit query (with Ctrl/Cmd for multiline textarea)
+  // Auto-resize textarea as user types
+  elements.queryInput.addEventListener('input', autoResizeTextarea);
+
+  // Enter to submit (Shift+Enter for new line)
   elements.queryInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleQuery();
     }

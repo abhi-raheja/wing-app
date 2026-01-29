@@ -2,7 +2,7 @@
 export default {
   // Use Node environment for Puppeteer (not JSDOM)
   testEnvironment: 'node',
-  roots: ['<rootDir>/__tests__'],
+  roots: ['<rootDir>/tests'],
   testMatch: ['**/*integration*/**/*.test.js'],
   moduleFileExtensions: ['js', 'json'],
   // Don't use the standard setup file - integration tests don't need Chrome mocks
