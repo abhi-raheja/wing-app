@@ -823,17 +823,27 @@ async function saveWing() {
 
 async function generateSummaryInBackground(wingId, tabId) {
   try {
-    // Check if API key is set
-    const result = await chrome.storage.local.get('anthropicApiKey');
-    if (!result.anthropicApiKey) {
+    // Check if API key is set for the current provider
+    const hasKey = await api.hasApiKey();
+    if (!hasKey) {
+      console.log('[Wing] No API key configured, skipping summary generation');
       return; // No API key, skip summary
     }
+
+    console.log('[Wing] Requesting summary generation for tab:', tabId);
 
     // Send message to background to generate summary
     const response = await chrome.runtime.sendMessage({
       type: 'GENERATE_SUMMARY',
       tabId: tabId,
     });
+
+    console.log('[Wing] Summary response:', response);
+
+    if (response && response.error) {
+      console.error('[Wing] Summary generation error:', response.error);
+      return;
+    }
 
     if (response && response.summary) {
       // Update the wing with the summary
@@ -851,17 +861,20 @@ async function generateSummaryInBackground(wingId, tabId) {
 
       // Re-render to remove "Summarizing..." badge
       renderWings();
+      console.log('[Wing] Summary saved successfully');
 
       // Analyze connections in the background (non-blocking)
       chrome.runtime.sendMessage({
         type: 'ANALYZE_CONNECTIONS',
         wingId: wingId,
       }).catch((error) => {
-        console.log('Connection analysis skipped:', error.message);
+        console.log('[Wing] Connection analysis skipped:', error.message);
       });
+    } else {
+      console.warn('[Wing] No summary in response:', response);
     }
   } catch (error) {
-    console.error('Error generating summary:', error);
+    console.error('[Wing] Error generating summary:', error);
   }
 }
 
