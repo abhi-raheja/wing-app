@@ -45,6 +45,10 @@ Wing stores your data locally on your device. The only external requests are to 
 - **Promotional tile (optional):** 440x280
 - **Marquee promo (optional):** 1400x560
 
+## Links
+- **Website:** https://abhi-raheja.github.io/wing-app/
+- **Privacy policy:** https://abhi-raheja.github.io/wing-app/privacy.html
+
 ## Release Notes (v1.0.0)
 - Initial public release
 - AI summaries, highlights, and smart connections
