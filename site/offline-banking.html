@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Wing Offline Banking Demo</title>
+    <meta name="description" content="Static QA page used to test Wing's offline behavior on a banking-style layout." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header>
+      <div class="container nav">
+        <div class="logo">
+          <div class="logo-badge">W</div>
+          <span>Wing QA</span>
+        </div>
+        <a class="nav-cta" href="index.html">Back to Wing</a>
+      </div>
+    </header>
+
+    <main class="section">
+      <div class="container" style="max-width: 980px;">
+        <div class="banking-hero">
+          <div>
+            <h1>Offline Banking Demo</h1>
+            <p>This static page exists so we can validate Wing's offline behavior on a banking-style layout. This is fictional data for QA only.</p>
+            <div class="banking-meta">
+              <span class="pill">Static HTML</span>
+              <span class="pill">No real data</span>
+              <span class="pill">Offline test</span>
+            </div>
+          </div>
+          <div class="banking-card">
+            <h3>Checking Account • 0012</h3>
+            <div class="balance">$14,283.19</div>
+            <div class="muted">Available balance • Snapshot as of Feb 2, 2026</div>
+            <div class="banking-details">
+              <div>
+                <span>Routing</span>
+                <strong>021000021</strong>
+              </div>
+              <div>
+                <span>Current APY</span>
+                <strong>0.65%</strong>
+              </div>
+              <div>
+                <span>Status</span>
+                <strong class="status-good">Healthy</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <section class="bank-grid">
+          <div class="card">
+            <h4>Recent Activity</h4>
+            <table class="bank-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Merchant</th>
+                  <th>Category</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Feb 1</td>
+                  <td>North Coast Market</td>
+                  <td>Groceries</td>
+                  <td>-$86.24</td>
+                </tr>
+                <tr>
+                  <td>Jan 31</td>
+                  <td>Atlas Cloud</td>
+                  <td>Software</td>
+                  <td>-$49.00</td>
+                </tr>
+                <tr>
+                  <td>Jan 30</td>
+                  <td>City Transit</td>
+                  <td>Transport</td>
+                  <td>-$24.50</td>
+                </tr>
+                <tr>
+                  <td>Jan 28</td>
+                  <td>Employer Payroll</td>
+                  <td>Income</td>
+                  <td>+$2,450.00</td>
+                </tr>
+                <tr>
+                  <td>Jan 27</td>
+                  <td>Blue Shield</td>
+                  <td>Health</td>
+                  <td>-$210.75</td>
+                </tr>
+                <tr>
+                  <td>Jan 25</td>
+                  <td>Harbor Utilities</td>
+                  <td>Utilities</td>
+                  <td>-$128.10</td>
+                </tr>
+                <tr>
+                  <td>Jan 24</td>
+                  <td>Wing App Store</td>
+                  <td>Subscriptions</td>
+                  <td>-$8.00</td>
+                </tr>
+                <tr>
+                  <td>Jan 22</td>
+                  <td>Oakside Cafe</td>
+                  <td>Dining</td>
+                  <td>-$14.95</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="card">
+            <h4>Upcoming Payments</h4>
+            <ul class="bank-list">
+              <li>
+                <span>Feb 3 • Mortgage</span>
+                <span>-$1,980.00</span>
+              </li>
+              <li>
+                <span>Feb 5 • Auto Insurance</span>
+                <span>-$146.20</span>
+              </li>
+              <li>
+                <span>Feb 7 • Streaming Bundle</span>
+                <span>-$29.99</span>
+              </li>
+              <li>
+                <span>Feb 12 • Cell Carrier</span>
+                <span>-$92.00</span>
+              </li>
+              <li>
+                <span>Feb 15 • Credit Card</span>
+                <span>-$450.00</span>
+              </li>
+            </ul>
+            <p class="muted" style="margin-top: 16px;">Auto-pay is enabled for recurring bills. Payment timing may shift if the due date lands on a weekend or bank holiday.</p>
+          </div>
+        </section>
+
+        <section class="bank-grid">
+          <div class="card">
+            <h4>Spending Targets</h4>
+            <div class="progress-row">
+              <div>
+                <div class="progress-label">Groceries • $420 / $500</div>
+                <div class="progress"><span style="width: 84%;"></span></div>
+              </div>
+            </div>
+            <div class="progress-row">
+              <div>
+                <div class="progress-label">Dining • $180 / $250</div>
+                <div class="progress"><span style="width: 72%;"></span></div>
+              </div>
+            </div>
+            <div class="progress-row">
+              <div>
+                <div class="progress-label">Utilities • $210 / $240</div>
+                <div class="progress"><span style="width: 88%;"></span></div>
+              </div>
+            </div>
+            <div class="progress-row">
+              <div>
+                <div class="progress-label">Travel • $95 / $300</div>
+                <div class="progress"><span style="width: 32%;"></span></div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <h4>Security Notices</h4>
+            <p>Fraud monitoring is active. If a transaction looks unusual, we'll pause it and notify you within 60 seconds.</p>
+            <ul class="bank-list">
+              <li>
+                <span>New device login detected</span>
+                <span class="status-warn">Review</span>
+              </li>
+              <li>
+                <span>Address change request</span>
+                <span class="status-good">Verified</span>
+              </li>
+              <li>
+                <span>Debit card travel notice</span>
+                <span class="status-good">On file</span>
+              </li>
+            </ul>
+            <p class="muted" style="margin-top: 16px;">If you do not recognize a notice, contact support immediately and lock your card from the app.</p>
+          </div>
+        </section>
+
+        <section class="card">
+          <h4>Transfer Preview</h4>
+          <p>Use this form to test Wing's highlight capture on labels and contextual copy. The form does not submit.</p>
+          <form class="bank-form">
+            <label for="fromAccount">From</label>
+            <select id="fromAccount" name="fromAccount">
+              <option>Checking • 0012</option>
+              <option>Savings • 7741</option>
+              <option>Business • 4439</option>
+            </select>
+            <label for="toAccount">To</label>
+            <select id="toAccount" name="toAccount">
+              <option>Brokerage • 1290</option>
+              <option>Mortgage • 9931</option>
+              <option>External Bank • 5501</option>
+            </select>
+            <label for="transferAmount">Amount</label>
+            <input id="transferAmount" name="transferAmount" type="text" value="$250.00" />
+            <label for="transferNote">Memo</label>
+            <input id="transferNote" name="transferNote" type="text" value="Emergency fund top-up" />
+            <button class="btn btn-primary" type="button">Schedule Transfer</button>
+          </form>
+        </section>
+
+        <section class="card">
+          <h4>Advisor Notes</h4>
+          <p>This month focuses on cash-flow resilience. Aim to keep at least three months of expenses in liquid savings, then redirect excess to long-term goals. Consider consolidating subscriptions and renegotiating fixed expenses before changing investment allocations.</p>
+          <p>For upcoming travel, notify the bank at least 48 hours in advance. If you expect large purchases (over $1,000), set a spending alert so the transaction clears smoothly. The bank never asks for your full password by email or text.</p>
+          <ul class="bank-list">
+            <li>
+              <span>Quarterly review scheduled</span>
+              <span>Mar 12, 2026</span>
+            </li>
+            <li>
+              <span>Emergency fund target</span>
+              <span>$18,000</span>
+            </li>
+            <li>
+              <span>Next savings transfer</span>
+              <span>Feb 16, 2026</span>
+            </li>
+          </ul>
+        </section>
+      </div>
+    </main>
+  </body>
+</html>

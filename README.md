@@ -50,7 +50,7 @@ Wing searches your winged pages and provides AI-generated answers with citations
 ### Configure AI Features
 
 1. Click the Wing icon → **Options** (gear icon)
-2. Select your AI provider (Anthropic, OpenAI, or Google)
+2. Select your AI provider (Anthropic or OpenAI)
 3. Enter your API key and click **Validate & Save**
 
 ## Usage
@@ -90,7 +90,7 @@ The page is saved and an AI summary generates in the background.
 - **Platform**: Chrome Extension (Manifest V3)
 - **Frontend**: Vanilla JavaScript, CSS
 - **Storage**: IndexedDB (local, no cloud sync)
-- **AI**: Multi-provider support (Anthropic Claude, OpenAI GPT, Google Gemini)
+- **AI**: Multi-provider support (Anthropic Claude, OpenAI GPT)
 
 ## Data Privacy
 
@@ -100,6 +100,8 @@ All your data is stored locally on your device using IndexedDB. Wing does not sy
 - Answering queries
 
 Your API key is stored in Chrome's secure storage and is never transmitted except to your selected AI provider.
+
+See `PRIVACY_POLICY.md` for full details.
 
 ## Export & Import
 

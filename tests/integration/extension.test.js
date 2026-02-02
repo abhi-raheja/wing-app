@@ -341,7 +341,6 @@ describe('Wing Extension Integration Tests', () => {
 
       expect(options).toContain('anthropic');
       expect(options).toContain('openai');
-      expect(options).toContain('google');
     });
 
     test('export button exists', async () => {

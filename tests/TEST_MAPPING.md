@@ -27,7 +27,7 @@ This document maps each item from TESTING_CHECKLIST.md to its automated test cov
 |----------------|-------------|-----------|-------|
 | Empty API key field initially | ✅ | `unit/api.test.js` | `hasApiKey returns false` |
 | Status message guides user | 👁️ Manual | - | Visual UX verification |
-| Link to console.anthropic.com | ✅ | `integration/extension.test.js` | Options page tests |
+| Provider API key link works | ✅ | `integration/extension.test.js` | Options page tests |
 | Invalid key format rejected | ✅ | `unit/api.test.js` | `validateApiKey` tests |
 | Invalid key shows error | ✅ | `unit/api.test.js` | `throws error for invalid API key` |
 | Valid key validates | ✅ | `unit/api.test.js` | `validates Anthropic key successfully` |

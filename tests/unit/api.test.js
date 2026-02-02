@@ -17,7 +17,6 @@ describe('Provider Configuration', () => {
 
     expect(providers).toHaveProperty('anthropic');
     expect(providers).toHaveProperty('openai');
-    expect(providers).toHaveProperty('google');
   });
 
   test('each provider has required configuration', () => {
@@ -52,10 +51,10 @@ describe('Provider Configuration', () => {
 
   describe('setCurrentProvider', () => {
     test('stores provider selection', async () => {
-      await api.setCurrentProvider('google');
+      await api.setCurrentProvider('openai');
 
       const stored = chrome.storage.local._getData();
-      expect(stored.llmProvider).toBe('google');
+      expect(stored.llmProvider).toBe('openai');
     });
   });
 });
@@ -80,12 +79,6 @@ describe('API Key Management', () => {
       expect(stored.openaiApiKey).toBe('sk-openai-test-key');
     });
 
-    test('saves Google API key', async () => {
-      await api.saveApiKey('google', 'AIzaSy-test-key');
-
-      const stored = chrome.storage.local._getData();
-      expect(stored.googleApiKey).toBe('AIzaSy-test-key');
-    });
   });
 
   describe('getApiKey', () => {
@@ -524,29 +517,6 @@ describe('Response Parsing', () => {
     expect(result.text).toBe('OpenAI response text');
   });
 
-  test('parses Google response format', async () => {
-    chrome.storage.local._setData({
-      llmProvider: 'google',
-      googleApiKey: 'AIzaSy-test'
-    });
-
-    global.fetch.mockImplementation(() =>
-      Promise.resolve({
-        ok: true,
-        status: 200,
-        json: () => Promise.resolve({
-          candidates: [{
-            content: { parts: [{ text: 'Google response text' }] }
-          }],
-          usageMetadata: { promptTokenCount: 10, candidatesTokenCount: 5 }
-        })
-      })
-    );
-
-    const result = await api.makeApiRequest({ prompt: 'Test' });
-
-    expect(result.text).toBe('Google response text');
-  });
 });
 
 describe('Error Handling', () => {

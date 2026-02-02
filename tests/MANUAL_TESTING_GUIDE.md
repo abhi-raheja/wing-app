@@ -14,7 +14,7 @@ This guide covers the sections that require manual testing. The automated tests 
 
 2. **Configure API Key**:
    - Go to Options → AI Provider
-   - Select your preferred provider (Anthropic, OpenAI, or Google)
+   - Select your preferred provider (Anthropic or OpenAI)
    - Enter your API key and save
 
 ---

@@ -174,11 +174,6 @@ async function saveApiKey() {
     return;
   }
 
-  if (currentProvider === 'google' && !apiKey.startsWith('AI')) {
-    showStatus('Invalid API key format. Google API keys start with "AI"', 'error');
-    return;
-  }
-
   try {
     // Validate API key by making a test request
     showStatus('Validating API key...', 'info');

@@ -842,6 +842,14 @@ async function generateSummaryInBackground(wingId, tabId) {
 
     if (response && response.error) {
       console.error('[Wing] Summary generation error:', response.error);
+      const errorText = response.error.toLowerCase();
+      let message = 'Summary failed. You can retry later.';
+      if (errorText.includes('offline')) {
+        message = 'You are offline. Summary was not generated.';
+      } else if (errorText.includes('cannot access contents of url')) {
+        message = 'Unable to read this page for a summary. Some pages restrict access.';
+      }
+      showToast(message, 'error');
       return;
     }
 
