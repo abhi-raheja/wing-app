@@ -15,6 +15,7 @@ zip -r "$ZIP_PATH" . \
   -x "store-assets/*" \
   -x "site/*" \
   -x ".git/*" \
+  -x ".github/*" \
   -x ".gitignore" \
   -x ".DS_Store" \
   -x "*.md" \
