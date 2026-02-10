@@ -11,7 +11,7 @@ import { jest } from '@jest/globals';
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
     chrome.storage.local.set({ wingFirstRun: true });
-    chrome.runtime.openOptionsPage();
+    chrome.tabs.create({ url: chrome.runtime.getURL('onboarding/onboarding.html') });
   }
 });
 
@@ -27,6 +27,18 @@ describe('First Install Onboarding', () => {
       // Verify the flag was set
       const result = await chrome.storage.local.get('wingFirstRun');
       expect(result.wingFirstRun).toBe(true);
+    });
+
+    test('opens onboarding page on fresh install', async () => {
+      chrome.runtime.onInstalled._simulateInstall({ reason: 'install' });
+      await testUtils.flushPromises();
+
+      // Verify a new tab was created with the onboarding URL
+      const tabs = chrome.tabs._getTabs();
+      const onboardingTab = tabs.find(t =>
+        t.url && t.url.includes('onboarding/onboarding.html')
+      );
+      expect(onboardingTab).toBeDefined();
     });
 
     test('does not set wingFirstRun flag on update', async () => {
@@ -46,7 +58,7 @@ describe('First Install Onboarding', () => {
     });
   });
 
-  describe('First-run detection (options page)', () => {
+  describe('First-run detection (onboarding page)', () => {
     test('wingFirstRun flag is detectable in storage', async () => {
       await chrome.storage.local.set({ wingFirstRun: true });
 
@@ -108,19 +120,19 @@ describe('API Key Feedback', () => {
 });
 
 describe('Onboarding Integration Contract', () => {
-  // Tests that the background.js -> options.js contract works correctly
-  // background.js sets wingFirstRun, options.js reads and clears it
+  // Tests that the background.js -> onboarding.js contract works correctly
+  // background.js sets wingFirstRun + opens onboarding tab, onboarding.js clears it on finish
 
   test('full onboarding flow: install → detect → clear', async () => {
-    // 1. Simulate install (background.js sets the flag)
+    // 1. Simulate install (background.js sets the flag and opens tab)
     chrome.runtime.onInstalled._simulateInstall({ reason: 'install' });
     await testUtils.flushPromises();
 
-    // 2. Options page detects the flag
+    // 2. Onboarding page detects the flag
     const detected = await chrome.storage.local.get('wingFirstRun');
     expect(detected.wingFirstRun).toBe(true);
 
-    // 3. Options page clears the flag after showing banner
+    // 3. Onboarding page clears the flag when user finishes
     await chrome.storage.local.remove('wingFirstRun');
 
     // 4. Flag is gone on next visit
@@ -128,8 +140,15 @@ describe('Onboarding Integration Contract', () => {
     expect(afterClear.wingFirstRun).toBeUndefined();
   });
 
-  test('openOptionsPage is callable on install', () => {
-    // Verify the mock supports the call (no error thrown)
-    expect(() => chrome.runtime.openOptionsPage()).not.toThrow();
+  test('chrome.tabs.create is callable for onboarding', async () => {
+    // Verify the mock supports tab creation (no error thrown)
+    const tab = await chrome.tabs.create({ url: 'chrome-extension://test/onboarding/onboarding.html' });
+    expect(tab).toBeDefined();
+    expect(tab.url).toContain('onboarding');
+  });
+
+  test('chrome.runtime.getURL generates correct onboarding URL', () => {
+    const url = chrome.runtime.getURL('onboarding/onboarding.html');
+    expect(url).toContain('onboarding/onboarding.html');
   });
 });

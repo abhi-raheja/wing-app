@@ -14,11 +14,11 @@ db.initDB().then(() => {
   console.error('Failed to initialize database:', error);
 });
 
-// Onboarding: open settings page on first install
+// Onboarding: open dedicated onboarding page on first install
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
     chrome.storage.local.set({ wingFirstRun: true });
-    chrome.runtime.openOptionsPage();
+    chrome.tabs.create({ url: chrome.runtime.getURL('onboarding/onboarding.html') });
   }
 });
 
