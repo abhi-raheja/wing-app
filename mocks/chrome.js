@@ -71,7 +71,8 @@ const createStorageMock = () => {
 
 // Runtime mock
 const createRuntimeMock = () => {
-  const listeners = [];
+  const messageListeners = [];
+  const installedListeners = [];
 
   return {
     sendMessage: (message) => {
@@ -83,22 +84,38 @@ const createRuntimeMock = () => {
 
     onMessage: {
       addListener: (callback) => {
-        listeners.push(callback);
+        messageListeners.push(callback);
       },
       removeListener: (callback) => {
-        const index = listeners.indexOf(callback);
+        const index = messageListeners.indexOf(callback);
         if (index > -1) {
-          listeners.splice(index, 1);
+          messageListeners.splice(index, 1);
         }
       },
-      hasListener: (callback) => listeners.includes(callback),
-      _listeners: listeners,
+      hasListener: (callback) => messageListeners.includes(callback),
+      _listeners: messageListeners,
       _simulateMessage: (message, sender = {}) => {
         const responses = [];
-        listeners.forEach(listener => {
+        messageListeners.forEach(listener => {
           listener(message, sender, (response) => responses.push(response));
         });
         return responses;
+      }
+    },
+
+    onInstalled: {
+      addListener: (callback) => {
+        installedListeners.push(callback);
+      },
+      removeListener: (callback) => {
+        const index = installedListeners.indexOf(callback);
+        if (index > -1) {
+          installedListeners.splice(index, 1);
+        }
+      },
+      _listeners: installedListeners,
+      _simulateInstall: (details = { reason: 'install' }) => {
+        installedListeners.forEach(listener => listener(details));
       }
     },
 
