@@ -35,6 +35,7 @@ body {
 /* Step visibility */
 .step {
   display: none;
+  flex-direction: column;
   width: 100%;
   min-height: 100vh;
   align-items: center;
@@ -45,6 +46,16 @@ body {
 
 .step.active {
   display: flex;
+}
+
+/* Cursive brand wordmark above cards */
+.brand-wordmark {
+  font-family: 'Dancing Script', cursive;
+  font-size: 42px;
+  font-weight: 700;
+  color: var(--color-primary);
+  margin-bottom: 20px;
+  letter-spacing: 1px;
 }
 
 @keyframes fadeIn {
