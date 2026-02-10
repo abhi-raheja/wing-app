@@ -210,6 +210,79 @@ body {
   align-items: center;
 }
 
+.btn-text {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 24px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  border: none;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.btn-text:hover {
+  color: var(--color-text-primary);
+}
+
+/* Skip confirmation */
+.skip-confirm {
+  background: #fff8e1;
+  border: 1px solid #ffe082;
+  border-radius: 10px;
+  padding: 20px;
+  animation: fadeIn 0.3s ease;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.skip-confirm.hidden {
+  display: none;
+}
+
+.skip-confirm-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #e65100;
+  margin-bottom: 10px;
+}
+
+.skip-confirm-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 14px 0;
+}
+
+.skip-confirm-list li {
+  font-size: 13px;
+  color: var(--color-text-primary);
+  padding: 4px 0;
+  padding-left: 20px;
+  position: relative;
+}
+
+.skip-confirm-list li::before {
+  content: "\2717";
+  position: absolute;
+  left: 0;
+  color: #e65100;
+  font-weight: 600;
+}
+
+.skip-confirm-note {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  margin-bottom: 16px;
+}
+
 /* Brand illustration (right panel, step 1) */
 .brand-illustration {
   text-align: center;

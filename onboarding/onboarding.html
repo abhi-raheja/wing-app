@@ -80,9 +80,24 @@
 
           <div id="apiStatus" class="api-status hidden"></div>
 
-          <div class="btn-row">
+          <div class="btn-row" id="mainButtons">
             <button id="saveKeyBtn" class="btn-primary">Save & Continue</button>
             <button id="skipBtn" class="btn-secondary">Skip for now</button>
+          </div>
+
+          <!-- Skip confirmation -->
+          <div id="skipConfirm" class="skip-confirm hidden">
+            <p class="skip-confirm-title">Without an API key, these features won't work:</p>
+            <ul class="skip-confirm-list">
+              <li>AI-generated page summaries</li>
+              <li>Smart connections between pages</li>
+              <li>Ask AI / chat with your content</li>
+            </ul>
+            <p class="skip-confirm-note">You can still save pages, organize collections, and highlight text. Add your key anytime in Settings.</p>
+            <div class="btn-row">
+              <button id="addKeyBtn" class="btn-primary">Add API Key</button>
+              <button id="continueWithoutBtn" class="btn-text">Continue without AI</button>
+            </div>
           </div>
         </div>
       </div>

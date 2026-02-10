@@ -30,6 +30,10 @@ const elements = {
   apiStatus: document.getElementById('apiStatus'),
   saveKeyBtn: document.getElementById('saveKeyBtn'),
   skipBtn: document.getElementById('skipBtn'),
+  mainButtons: document.getElementById('mainButtons'),
+  skipConfirm: document.getElementById('skipConfirm'),
+  addKeyBtn: document.getElementById('addKeyBtn'),
+  continueWithoutBtn: document.getElementById('continueWithoutBtn'),
   startBtn: document.getElementById('startBtn'),
   readySubtitle: document.getElementById('readySubtitle'),
 };
@@ -126,8 +130,21 @@ async function handleSaveKey() {
 }
 
 function handleSkip() {
+  // Show the confirmation instead of immediately skipping
+  elements.mainButtons.classList.add('hidden');
+  elements.skipConfirm.classList.remove('hidden');
+}
+
+function handleAddKey() {
+  // User changed their mind — go back to the form
+  elements.skipConfirm.classList.add('hidden');
+  elements.mainButtons.classList.remove('hidden');
+  elements.apiKeyInput.focus();
+}
+
+function handleContinueWithout() {
   elements.readySubtitle.textContent =
-    'Wing is ready to use. You can add your AI key later in Settings.';
+    'Wing is ready to use. You can add your AI key anytime in Settings.';
   goToStep(3);
 }
 
@@ -158,6 +175,8 @@ elements.providerSelect.addEventListener('change', () => {
 elements.toggleVisibility.addEventListener('click', toggleVisibility);
 elements.saveKeyBtn.addEventListener('click', handleSaveKey);
 elements.skipBtn.addEventListener('click', handleSkip);
+elements.addKeyBtn.addEventListener('click', handleAddKey);
+elements.continueWithoutBtn.addEventListener('click', handleContinueWithout);
 elements.startBtn.addEventListener('click', handleStart);
 
 // Save on Enter
