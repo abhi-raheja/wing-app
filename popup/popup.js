@@ -39,6 +39,9 @@ let currentWingConnections = [];
 // Chat state
 let chatMessages = [];
 
+// API key state (cached for UI rendering)
+let noApiKey = false;
+
 // Pagination
 const WINGS_PER_PAGE = 20;
 let currentPage = 1;
@@ -470,7 +473,7 @@ function renderWingsWithHighlighting(wingsToRender, searchQuery, totalCount = wi
           <div class="wing-card-meta">
             <span>${formatDate(wing.timestamp)}</span>
             ${collectionBadges}
-            ${!wing.summary ? '<span class="wing-card-collection" style="background: #fff3e0; color: #e65100;">Summarizing...</span>' : ''}
+            ${!wing.summary ? `<span class="wing-card-badge-no-summary">${noApiKey ? 'No API key' : 'Summarizing...'}</span>` : ''}
           </div>
         </div>
       </div>
@@ -827,7 +830,10 @@ async function generateSummaryInBackground(wingId, tabId) {
     const hasKey = await api.hasApiKey();
     if (!hasKey) {
       console.log('[Wing] No API key configured, skipping summary generation');
-      return; // No API key, skip summary
+      noApiKey = true;
+      showToast('Add your AI API key in Settings to generate summaries', 'warning');
+      renderFilteredWings(false);
+      return;
     }
 
     console.log('[Wing] Requesting summary generation for tab:', tabId);
@@ -2299,6 +2305,9 @@ async function init() {
       db.getAllNests(),
       db.getAllWings(),
     ]);
+
+    // Check API key state for badge rendering
+    noApiKey = !(await api.hasApiKey());
 
     updateSortUI();
     renderWings();

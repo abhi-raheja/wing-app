@@ -330,6 +330,17 @@ body {
   border-radius: 50%;
 }
 
+.wing-card-badge-no-summary {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  background: #fff3e0;
+  color: #e65100;
+  white-space: nowrap;
+}
+
 /* Wings Pagination */
 .wings-pagination {
   display: flex;

@@ -18,6 +18,8 @@ import {
 // DOM Elements
 // ============================================
 const elements = {
+  welcomeBanner: document.getElementById('welcomeBanner'),
+  welcomeDismiss: document.getElementById('welcomeDismiss'),
   themeOptions: document.querySelectorAll('input[name="theme"]'),
   llmProvider: document.getElementById('llmProvider'),
   apiKey: document.getElementById('apiKey'),
@@ -425,6 +427,7 @@ function setupEventListeners() {
   elements.importData.addEventListener('click', triggerImport);
   elements.importFile.addEventListener('change', handleImport);
   elements.clearAllData.addEventListener('click', clearAllData);
+  elements.welcomeDismiss.addEventListener('click', dismissWelcomeBanner);
 
   // Save API key on Enter
   elements.apiKey.addEventListener('keypress', (e) => {
@@ -435,6 +438,26 @@ function setupEventListeners() {
 // ============================================
 // Initialization
 // ============================================
+async function checkFirstRun() {
+  const result = await chrome.storage.local.get('wingFirstRun');
+  if (result.wingFirstRun) {
+    // Show welcome banner
+    elements.welcomeBanner.classList.remove('hidden');
+
+    // Scroll to the AI Provider section after a short delay
+    setTimeout(() => {
+      elements.llmProvider.closest('.section').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 500);
+
+    // Clear the flag
+    await chrome.storage.local.remove('wingFirstRun');
+  }
+}
+
+function dismissWelcomeBanner() {
+  elements.welcomeBanner.classList.add('hidden');
+}
+
 async function init() {
   try {
     await db.initDB();
@@ -442,6 +465,7 @@ async function init() {
     await loadProviders();
     await loadStats();
     setupEventListeners();
+    await checkFirstRun();
     console.log('Wing options page initialized');
   } catch (error) {
     console.error('Failed to initialize options page:', error);

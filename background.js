@@ -14,6 +14,14 @@ db.initDB().then(() => {
   console.error('Failed to initialize database:', error);
 });
 
+// Onboarding: open settings page on first install
+chrome.runtime.onInstalled.addListener((details) => {
+  if (details.reason === 'install') {
+    chrome.storage.local.set({ wingFirstRun: true });
+    chrome.runtime.openOptionsPage();
+  }
+});
+
 // ============================================
 // Theme Management
 // ============================================
